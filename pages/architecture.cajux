@@ -8,6 +8,130 @@ import "./i18n"
 import "./core"
 import "./icons"
 import "./highlight"
+import style "../caju-style/style"
+
+# pipeline
+let LEXER_TOKENS = map[str]str{
+  "KEYWORD": style.def("lexer-token-keyword", "text-[13px] text-tok-kw"),
+  "NAME": style.def("lexer-token-name", "text-[13px] text-tok-type"),
+  "OP": style.def("lexer-token-op", "text-[13px] text-code-text"),
+  "NUMBER": style.def("lexer-token-number", "text-[13px] text-tok-num"),
+}
+let lexer_token_other = style.def("lexer-token", "text-[13px] text-code-dim")
+let source_line = style.def("source-line", "flex gap-4")
+let source_number = style.def("source-line-number", "w-5 shrink-0 text-right text-code-gutter select-none")
+let source_text = style.def("source-line-text", "whitespace-pre")
+let stage_button = style.def("stage-button", "flex flex-col items-start rounded-xl bg-card px-3.5 py-2 text-left shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:shadow-[inset_0_0_0_1px_var(--color-primary)]")
+let stage_button_on = style.def("stage-button-selected", "flex flex-col items-start rounded-xl bg-primary px-3.5 py-2 text-left text-primary-foreground transition-colors")
+let stage_what = style.def("stage-what", "font-mono text-xs text-muted-foreground")
+let stage_what_on = style.def("stage-what-selected", "font-mono text-xs opacity-85")
+let stage_item = style.def("stage", "flex items-center")
+let stage_name = style.def("stage-name", "text-[15px] font-bold")
+let stage_arrow = style.def("stage-arrow", "mx-1 size-4 shrink-0 text-muted-foreground")
+let lexer_item = style.def("lexer-item", "flex flex-col rounded-md bg-white/5 px-2 py-1 leading-tight")
+let lexer_kind = style.def("lexer-kind", "text-[10px] text-code-dim")
+let lexer_list = style.def("lexer-list", "flex flex-wrap gap-1.5")
+let tree = style.def("tree", "whitespace-pre")
+let tree_annotation = style.def("tree-annotation", "text-tok-str")
+let codegen_note = style.def("codegen-note", "mt-4 font-sans text-sm leading-relaxed text-code-dim")
+let binaries = style.def("binaries", "flex flex-col gap-4 font-sans")
+let binary_box = style.def("binary", "rounded-xl bg-white/5 p-4")
+let binary_run = style.def("binary-run", "@binary font-mono text-[13px]")
+let binary_head = style.def("binary-head", "flex items-baseline justify-between")
+let binary_name = style.def("binary-name", "font-bold")
+let binary_size = style.def("binary-size", "font-mono text-tok-num")
+let binary_command = style.def("binary-command", "mt-2 font-mono text-xs text-code-dim")
+let binary_prompt = style.def("binary-prompt", "text-code-dim")
+let target_tab = style.def("target-tab", "rounded-md px-2.5 py-1 hover:bg-white/10")
+let target_tab_on = style.def("target-tab-selected", "rounded-md bg-tok-kw px-2.5 py-1 text-[#1E1712]")
+let pipeline = style.def("pipeline", "flex flex-col gap-6")
+let stage_list = style.def("stage-list", "flex flex-wrap items-center gap-y-3")
+let pipeline_grid = style.def("pipeline-grid", "grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]")
+let stage_info = style.def("stage-info", "flex flex-col gap-4")
+let stage_title_row = style.def("stage-title-row", "flex items-baseline gap-3")
+let stage_number = style.def("stage-number", "font-mono text-sm text-primary")
+let stage_title = style.def("stage-title", "text-2xl font-bold")
+let prose = style.def("arch-prose", "text-base leading-[1.75] text-foreground/85")
+let sample = style.def("sample", "overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]")
+let sample_bar = style.def("sample-bar", "bg-code-bar px-4 py-2 font-mono text-xs text-code-dim")
+let sample_code = style.def("sample-code", "overflow-x-auto px-4 py-3 font-mono text-[13px] leading-[1.7]")
+let stage_output = style.def("stage-output", "flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]")
+let stage_output_bar = style.def("stage-output-bar", "flex min-h-10 flex-wrap items-center justify-between gap-2 bg-code-bar px-4 py-1.5 font-mono text-xs text-code-dim")
+let target_tabs = style.def("target-tabs", "flex gap-1")
+let stage_output_body = style.def("stage-output-body", "max-h-[460px] min-h-[300px] flex-1 overflow-auto px-4 py-4 font-mono text-[13px] leading-[1.7]")
+# values in memory: a cell's look comes from data-tone (ptr, meta, plain) and data-wide
+let memory_cell = style.def("memory-cell", "flex h-11 min-w-12 items-center justify-center border-y border-l px-3 font-mono text-sm last:border-r data-[wide]:min-w-24 data-[tone=ptr]:bg-accent data-[tone=ptr]:text-accent-foreground data-[tone=meta]:bg-muted data-[tone=meta]:text-muted-foreground data-[tone=plain]:bg-card")
+let memory_slot = style.def("memory-slot", "flex flex-col items-center gap-1")
+let memory_slot_name = style.def("memory-slot-name", "h-4 font-mono text-[10px] text-muted-foreground")
+let memory_object = style.def("memory-object", "flex flex-col gap-1")
+let memory_object_name = style.def("memory-object-name", "text-xs font-medium text-muted-foreground")
+let memory_cells = style.def("memory-cells", "flex")
+let memory_arrow = style.def("memory-arrow", "mt-5 size-5 shrink-0 text-primary")
+let memory_stack = style.def("memory-stack", "flex flex-col gap-3")
+let value_tab = style.def("value-tab", "h-10 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary")
+let value_tab_on = style.def("value-tab-selected", "h-10 rounded-full bg-foreground px-4 text-[15px] font-medium text-background transition-colors")
+let values_box = style.def("values", "flex flex-col gap-5")
+let value_tabs = style.def("value-tabs", "flex flex-wrap gap-2")
+let value_panel = style.def("value-panel", "flex flex-col gap-5 rounded-[20px] bg-card p-6 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-8")
+let value_code = style.def("value-code", "self-start rounded-lg bg-code px-3 py-1.5 font-mono text-sm text-code-text")
+let value_diagram = style.def("value-diagram", "flex flex-wrap items-start gap-x-3 gap-y-4 overflow-x-auto pb-1")
+let narrow_prose = style.def("narrow-prose", "max-w-[72ch] leading-[1.7] text-foreground/85")
+# the garbage collector
+let gc_root_label = style.def("gc-root-label", "fill-accent-foreground font-mono text-[11px]")
+let gc_object = style.def("gc-object", "transition-opacity")
+let gc_object_label = style.def("gc-object-label", "font-mono text-[12px]")
+let gc_legend_swatch = style.def("gc-legend-swatch", "inline-block size-3.5 rounded")
+let GC_LEGEND = map[str]str{
+  "live": style.def("gc-legend-live", "@gc-legend-swatch bg-card shadow-[inset_0_0_0_1px_var(--color-border)]"),
+  "marked": style.def("gc-legend-marked", "@gc-legend-swatch bg-primary"),
+  "garbage": style.def("gc-legend-garbage", "@gc-legend-swatch border border-dashed border-destructive bg-muted"),
+  "free": style.def("gc-legend-free", "@gc-legend-swatch border border-dashed border-muted-foreground opacity-50"),
+}
+let gc_legend_item = style.def("gc-legend-item", "flex items-center gap-2")
+let gc_demo = style.def("gc-demo", "flex flex-col gap-4 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-7")
+let gc_controls = style.def("gc-controls", "flex flex-wrap items-center gap-2.5")
+let gc_status = style.def("gc-status", "min-h-12 text-[15px] leading-relaxed text-foreground/85")
+let gc_scroll = style.def("gc-scroll", "overflow-x-auto")
+let gc_svg = style.def("gc-diagram", "min-w-[560px]")
+let gc_heading = style.def("gc-heading", "fill-muted-foreground text-[12px] font-medium")
+let gc_legend = style.def("gc-legend", "flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground")
+# static pieces
+let flow_step = style.def("flow-step", "relative flex flex-col")
+let flow_card = style.def("flow-card", "flex h-full flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let flow_card_hot = style.def("flow-card-hot", "@flow-card bg-accent")
+let flow_head = style.def("flow-head", "flex items-center gap-2")
+let flow_number = style.def("flow-number", "flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground")
+let card_heading = style.def("card-heading", "font-bold")
+let card_text = style.def("card-text", "text-[15px] leading-relaxed text-muted-foreground")
+let flow_arrow_right = style.def("flow-arrow-right", "absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full bg-background text-primary md:block")
+let flow_arrow_down = style.def("flow-arrow-down", "mx-auto my-1 size-5 text-primary md:hidden")
+let flow = style.def("flow", "grid grid-cols-1 gap-3 md:grid-flow-col md:auto-cols-fr")
+# a slot of the call frame; data-tone: locals, args or callee
+let frame_cell = style.def("frame-cell", "border-x border-t px-3 py-1.5 font-mono text-[13px] last:border-b data-[tone=locals]:bg-muted/60 data-[tone=args]:bg-accent data-[tone=callee]:bg-card")
+let frame_line = style.def("frame-row", "flex items-center gap-3")
+let frame_label = style.def("frame-label", "w-28 shrink-0 text-right text-xs text-muted-foreground")
+let frame_cells = style.def("frame-cells", "flex flex-1 flex-col")
+let frame_box = style.def("frame", "flex flex-col gap-1.5 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let frame_caller = style.def("frame-caller", "mb-1 text-sm font-bold")
+let frame_callee = style.def("frame-callee", "mt-1 text-sm font-bold")
+let frame_pointer = style.def("frame-pointer", "w-28 shrink-0 text-right font-mono text-xs text-primary")
+let frame_pointer_line = style.def("frame-pointer-line", "h-px flex-1 bg-primary")
+let arch_section = style.def("arch-section", "scroll-mt-20")
+let arch_section_alt = style.def("arch-section-alt", "scroll-mt-20 bg-surface")
+let toc_chip = style.def("arch-chip", "inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary")
+let toc_chip_number = style.def("arch-chip-number", "font-mono text-xs text-primary")
+let info_card = style.def("info-card", "flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let tool_heading = style.def("tool-heading", "font-mono font-bold text-primary")
+let toc_nav = style.def("arch-chips", "flex flex-wrap gap-2.5")
+let bootstrap_check = style.def("bootstrap-check", "flex flex-wrap items-center gap-3 font-mono text-sm")
+let bootstrap_command = style.def("bootstrap-command", "rounded-lg bg-code px-3 py-1.5 text-code-text")
+let bootstrap_result = style.def("bootstrap-result", "rounded-lg bg-accent px-3 py-1.5 text-accent-foreground")
+let calls_grid = style.def("calls-grid", "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]")
+let calls_cards = style.def("calls-cards", "grid grid-cols-1 gap-3 sm:grid-cols-2")
+let playground_link = style.def("playground-link", "inline-flex h-12 items-center rounded-[14px] bg-primary px-6 font-bold text-primary-foreground hover:bg-brand-hover")
+let tools_body = style.def("tools-body", "@page-width flex flex-col gap-6 py-16")
+let tools_title = style.def("tools-title", "text-[28px] font-bold tracking-[-0.03em]")
+let tools_grid = style.def("tools-grid", "grid grid-cols-1 gap-3 md:grid-cols-3")
 
 fn pad2(i: int) -> str {
   if i < 10 { return "0" + str(i) }
@@ -20,22 +144,17 @@ fn a(path: str) -> str { return i18n.tr("arch." + path) }
 # Pipeline
 
 fn token_color(t: str) -> str {
-  switch t {
-  case "KEYWORD": return "text-tok-kw"
-  case "NAME": return "text-tok-type"
-  case "OP": return "text-code-text"
-  case "NUMBER": return "text-tok-num"
-  }
-  return "text-code-dim"
+  if c, ok := LEXER_TOKENS[t]; ok { return c }
+  return lexer_token_other
 }
 
 fn highlighted(code: str) -> []*ui.Node {
   out := []*ui.Node{}
   for i, line := range strings.split(code, "\n") {
     out = append(out, (
-      <div class="flex gap-4">
-        <span aria-hidden="true" class="w-5 shrink-0 text-right text-code-gutter select-none">{i + 1}</span>
-        <span class="whitespace-pre">{highlight.line_nodes(line)}</span>
+      <div class={source_line}>
+        <span aria-hidden="true" class={source_number}>{i + 1}</span>
+        <span class={source_text}>{highlight.line_nodes(line)}</span>
       </div>
     ))
   }
@@ -73,7 +192,7 @@ fn checked_line(line: str) -> *ui.Node {
     if !attrs_only(line[p:]) { continue }
     w := p - 1
     while w > 0 && int(line[w - 1]) == 32 { w-- }
-    return <div>{line[0:w]}{line[w:p]}<span class="text-tok-str">{line[p:]}</span></div>
+    return <div>{line[0:w]}{line[w:p]}<span class={tree_annotation}>{line[p:]}</span></div>
   }
   return <div>{line}</div>
 }
@@ -81,7 +200,7 @@ fn checked_line(line: str) -> *ui.Node {
 fn asm_line(line: str) -> *ui.Node {
   c := strings.index(line, ";")
   if c < 0 { return <div>{line}</div> }
-  return <div>{line[0:c]}<span class="text-tok-comment italic">{line[c:]}</span></div>
+  return <div>{line[0:c]}<span class={highlight.token_class("comment")}>{line[c:]}</span></div>
 }
 
 fn Pipeline() -> *ui.Node {
@@ -94,19 +213,15 @@ fn Pipeline() -> *ui.Node {
     id := s.get_str("id", "")
     on := id == sel.v
     if on { idx = k }
-    cls := "flex flex-col items-start rounded-xl px-3.5 py-2 text-left transition-colors bg-card shadow-[inset_0_0_0_1px_var(--color-border)] hover:shadow-[inset_0_0_0_1px_var(--color-primary)]"
-    what_cls := "font-mono text-xs text-muted-foreground"
-    if on {
-      cls = "flex flex-col items-start rounded-xl px-3.5 py-2 text-left transition-colors bg-primary text-primary-foreground"
-      what_cls = "font-mono text-xs opacity-85"
-    }
+    cls := style.pick(on, stage_button_on, stage_button)
+    what_cls := style.pick(on, stage_what_on, stage_what)
     buttons = append(buttons, (
-      <li class="flex items-center">
+      <li class={stage_item}>
         <button onClick={fn() { sel.set(id) }} aria-pressed={core.bs(on)} class={cls}>
-          <span class="text-[15px] font-bold">{s.get_str("name", "")}</span>
+          <span class={stage_name}>{s.get_str("name", "")}</span>
           <span class={what_cls}>{s.get_str("what", "")}</span>
         </button>
-        {ui.when(k + 1 < len(stages), icons.icon("chevron-right", "mx-1 size-4 shrink-0 text-muted-foreground"))}
+        {ui.when(k + 1 < len(stages), icons.icon("chevron-right", stage_arrow))}
       </li>
     ))
   }
@@ -121,19 +236,19 @@ fn Pipeline() -> *ui.Node {
       pos := t.items[0].s
       typ := t.items[1].s
       toks = append(toks, (
-        <li class="flex flex-col rounded-md bg-white/5 px-2 py-1 leading-tight" title={pos + " " + typ}>
-          <span class={"text-[13px] " + token_color(typ)}>{t.items[2].s}</span>
-          <span class="text-[10px] text-code-dim">{typ} {pos}</span>
+        <li class={lexer_item} title={pos + " " + typ}>
+          <span class={token_color(typ)}>{t.items[2].s}</span>
+          <span class={lexer_kind}>{typ} {pos}</span>
         </li>
       ))
     }
-    out = <ol class="flex flex-wrap gap-1.5">{toks}</ol>
-  case "parser": out = <pre class="whitespace-pre">{i18n.C.get_str("arch.parseTree", "")}</pre>
-  case "linker": out = <pre class="whitespace-pre">{i18n.C.get_str("arch.linkedTree", "")}</pre>
+    out = <ol class={lexer_list}>{toks}</ol>
+  case "parser": out = <pre class={tree}>{i18n.C.get_str("arch.parseTree", "")}</pre>
+  case "linker": out = <pre class={tree}>{i18n.C.get_str("arch.linkedTree", "")}</pre>
   case "checker":
     lines := []*ui.Node{}
     for _, l := range strings.split(i18n.C.get_str("arch.checkedTree", ""), "\n") { lines = append(lines, checked_line(l)) }
-    out = <pre class="whitespace-pre">{lines}</pre>
+    out = <pre class={tree}>{lines}</pre>
   case "codegen":
     code := i18n.C.get_str("arch.x86", "")
     if target.v == "wasm" { code = i18n.C.get_str("arch.wasm", "") }
@@ -141,23 +256,23 @@ fn Pipeline() -> *ui.Node {
     for _, l := range strings.split(code, "\n") { lines = append(lines, asm_line(l)) }
     out = (
       <>
-        <pre class="whitespace-pre">{lines}</pre>
-        <p class="mt-4 font-sans text-sm leading-relaxed text-code-dim">{i18n.rich(a("codegenNote"))}</p>
+        <pre class={tree}>{lines}</pre>
+        <p class={codegen_note}>{i18n.rich(a("codegenNote"))}</p>
       </>
     )
   case "binary":
     out = (
-      <div class="flex flex-col gap-4 font-sans">
-        <div class="rounded-xl bg-white/5 p-4">
-          <div class="flex items-baseline justify-between"><span class="font-bold">Linux · ELF</span><span class="font-mono text-tok-num">53 KB</span></div>
-          <div class="mt-2 font-mono text-xs text-code-dim">$ caju build -o main main.caju</div>
+      <div class={binaries}>
+        <div class={binary_box}>
+          <div class={binary_head}><span class={binary_name}>Linux · ELF</span><span class={binary_size}>53 KB</span></div>
+          <div class={binary_command}>$ caju build -o main main.caju</div>
         </div>
-        <div class="rounded-xl bg-white/5 p-4">
-          <div class="flex items-baseline justify-between"><span class="font-bold">WebAssembly</span><span class="font-mono text-tok-num">107 KB</span></div>
-          <div class="mt-2 font-mono text-xs text-code-dim">$ caju build --target wasm -o main.wasm main.caju</div>
+        <div class={binary_box}>
+          <div class={binary_head}><span class={binary_name}>WebAssembly</span><span class={binary_size}>107 KB</span></div>
+          <div class={binary_command}>$ caju build --target wasm -o main.wasm main.caju</div>
         </div>
-        <div class="rounded-xl bg-white/5 p-4 font-mono text-[13px]">
-          <div class="text-code-dim">$ ./main</div>
+        <div class={binary_run}>
+          <div class={binary_prompt}>$ ./main</div>
           <div>5</div>
         </div>
       </div>
@@ -166,31 +281,30 @@ fn Pipeline() -> *ui.Node {
   tabs := []*ui.Node{}
   for _, tk := range []str{"x86", "wasm"} {
     on := target.v == tk
-    cls := "rounded-md px-2.5 py-1 hover:bg-white/10"
-    if on { cls = "rounded-md px-2.5 py-1 bg-tok-kw text-[#1E1712]" }
+    cls := style.pick(on, target_tab_on, target_tab)
     tabs = append(tabs, <button role="tab" aria-selected={core.bs(on)} onClick={fn() { target.set(tk) }} class={cls}>{a(tk)}</button>)
   }
   return (
-    <div class="flex flex-col gap-6">
-      <ol class="flex flex-wrap items-center gap-y-3" aria-label="Compiler stages">{buttons}</ol>
-      <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-baseline gap-3">
-            <span class="font-mono text-sm text-primary">{pad2(idx + 1)}</span>
-            <h3 class="text-2xl font-bold">{stage.get_str("name", "")}</h3>
+    <div class={pipeline}>
+      <ol class={stage_list} aria-label="Compiler stages">{buttons}</ol>
+      <div class={pipeline_grid}>
+        <div class={stage_info}>
+          <div class={stage_title_row}>
+            <span class={stage_number}>{pad2(idx + 1)}</span>
+            <h3 class={stage_title}>{stage.get_str("name", "")}</h3>
           </div>
-          <p class="text-base leading-[1.75] text-foreground/85">{i18n.rich(stage.get_str("desc", ""))}</p>
-          <div class="overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
-            <div class="bg-code-bar px-4 py-2 font-mono text-xs text-code-dim">{a("sample")} · main.caju</div>
-            <pre class="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-[1.7]"><code>{highlighted(src)}</code></pre>
+          <p class={prose}>{i18n.rich(stage.get_str("desc", ""))}</p>
+          <div class={sample}>
+            <div class={sample_bar}>{a("sample")} · main.caju</div>
+            <pre class={sample_code}><code>{highlighted(src)}</code></pre>
           </div>
         </div>
-        <div class="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
-          <div class="flex min-h-10 flex-wrap items-center justify-between gap-2 bg-code-bar px-4 py-1.5 font-mono text-xs text-code-dim">
+        <div class={stage_output}>
+          <div class={stage_output_bar}>
             <span>{a("output")}: {stage.get_str("what", "")}</span>
-            {ui.when(sel.v == "codegen", <div role="tablist" class="flex gap-1">{tabs}</div>)}
+            {ui.when(sel.v == "codegen", <div role="tablist" class={target_tabs}>{tabs}</div>)}
           </div>
-          <div class="max-h-[460px] min-h-[300px] flex-1 overflow-auto px-4 py-4 font-mono text-[13px] leading-[1.7]">{out}</div>
+          <div class={stage_output_body}>{out}</div>
         </div>
       </div>
     </div>
@@ -201,29 +315,26 @@ fn Pipeline() -> *ui.Node {
 # Values in memory
 
 fn cell(top: str, content: str, tone: str, wide: bool) -> *ui.Node {
-  cls := "flex h-11 items-center justify-center border-y border-l px-3 font-mono text-sm last:border-r"
-  if wide { cls = cls + " min-w-24" } else { cls = cls + " min-w-12" }
-  if tone == "ptr" { cls = cls + " bg-accent text-accent-foreground" }
-  if tone == "meta" { cls = cls + " bg-muted text-muted-foreground" }
-  if tone == "plain" { cls = cls + " bg-card" }
+  let w: any = nil
+  if wide { w = "" }
   return (
-    <div class="flex flex-col items-center gap-1">
-      <span class="h-4 font-mono text-[10px] text-muted-foreground">{top}</span>
-      <div class={cls}>{content}</div>
+    <div class={memory_slot}>
+      <span class={memory_slot_name}>{top}</span>
+      <div class={memory_cell} data-tone={tone} data-wide={w}>{content}</div>
     </div>
   )
 }
 
 fn obj(label: str, cells: []*ui.Node) -> *ui.Node {
   return (
-    <div class="flex flex-col gap-1">
-      <span class="text-xs font-medium text-muted-foreground">{label}</span>
-      <div class="flex">{cells}</div>
+    <div class={memory_object}>
+      <span class={memory_object_name}>{label}</span>
+      <div class={memory_cells}>{cells}</div>
     </div>
   )
 }
 
-fn arrow() -> *ui.Node { return icons.icon("arrow-right", "mt-5 size-5 shrink-0 text-primary") }
+fn arrow() -> *ui.Node { return icons.icon("arrow-right", memory_arrow) }
 
 fn ptr(label: str) -> *ui.Node { return obj(label, []*ui.Node{cell("", "●", "ptr", false)}) }
 
@@ -246,7 +357,7 @@ fn diagram(id: str) -> (str, []*ui.Node) {
     return "m := map[str]int{\"a\": 1, \"b\": 2}", []*ui.Node{ptr("m"), arrow(),
       obj("table", []*ui.Node{cell("count", "2", "meta", false), cell("entries", "●", "ptr", false), cell("index", "●", "ptr", false)}),
       arrow(),
-      <div class="flex flex-col gap-3">
+      <div class={memory_stack}>
         {obj("entries (insertion order)", []*ui.Node{cell("key", "\"a\"", "plain", false), cell("value", "1", "plain", false), cell("key", "\"b\"", "plain", false), cell("value", "2", "plain", false)})}
         {obj("index (tag | position + 1)", []*ui.Node{cell("", "—", "meta", false), cell("", "t·2", "plain", false), cell("", "—", "meta", false), cell("", "t·1", "plain", false)})}
       </div>,
@@ -268,18 +379,17 @@ fn Values() -> *ui.Node {
     id := x.get_str("id", "")
     on := id == sel.v
     if on { desc = x.get_str("desc", "") }
-    cls := "h-10 rounded-full px-4 text-[15px] font-medium transition-colors bg-card shadow-[inset_0_0_0_1px_var(--color-border)] hover:text-primary"
-    if on { cls = "h-10 rounded-full px-4 text-[15px] font-medium transition-colors bg-foreground text-background" }
+    cls := style.pick(on, value_tab_on, value_tab)
     tabs = append(tabs, <button role="tab" aria-selected={core.bs(on)} onClick={fn() { sel.set(id) }} class={cls}>{x.get_str("title", "")}</button>)
   }
   code, parts := diagram(sel.v)
   return (
-    <div class="flex flex-col gap-5">
-      <div role="tablist" class="flex flex-wrap gap-2">{tabs}</div>
-      <div class="flex flex-col gap-5 rounded-[20px] bg-card p-6 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-8">
-        <code class="self-start rounded-lg bg-code px-3 py-1.5 font-mono text-sm text-code-text">{code}</code>
-        <div class="flex flex-wrap items-start gap-x-3 gap-y-4 overflow-x-auto pb-1">{parts}</div>
-        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(desc)}</p>
+    <div class={values_box}>
+      <div role="tablist" class={value_tabs}>{tabs}</div>
+      <div class={value_panel}>
+        <code class={value_code}>{code}</code>
+        <div class={value_diagram}>{parts}</div>
+        <p class={narrow_prose}>{i18n.rich(desc)}</p>
       </div>
     </div>
   )
@@ -444,7 +554,7 @@ fn GcDemo() -> *ui.Node {
     roots = append(roots, (
       <g>
         <rect x={rt.x - 54} y={rt.y - 18} width="108" height="36" rx="8" fill="var(--accent)" stroke="var(--border)"></rect>
-        <text x={rt.x} y={rt.y + 4} text-anchor="middle" class="fill-accent-foreground font-mono text-[11px]">{rt.label}</text>
+        <text x={rt.x} y={rt.y + 4} text-anchor="middle" class={gc_root_label}>{rt.label}</text>
       </g>
     ))
   }
@@ -462,46 +572,40 @@ fn GcDemo() -> *ui.Node {
     opacity := "1"
     if s == "free" { opacity = "0.35" }
     objs = append(objs, (
-      <g class="transition-opacity" opacity={opacity}>
+      <g class={gc_object} opacity={opacity}>
         <rect x={o.x - 46} y={o.y - 20} width="92" height="40" rx="10" fill={fill} stroke={stroke} stroke-dasharray={dash} stroke-width="1.4" style="transition:fill 300ms"></rect>
-        <text x={o.x} y={o.y + 4} text-anchor="middle" class="font-mono text-[12px]" fill={text}>{o.label}</text>
+        <text x={o.x} y={o.y + 4} text-anchor="middle" class={gc_object_label} fill={text}>{o.label}</text>
       </g>
     ))
   }
   legend := []*ui.Node{}
   for _, k := range []str{"live", "marked", "garbage", "free"} {
-    sw := map[str]str{
-      "live": "bg-card shadow-[inset_0_0_0_1px_var(--color-border)]",
-      "marked": "bg-primary",
-      "garbage": "border border-dashed border-destructive bg-muted",
-      "free": "border border-dashed border-muted-foreground opacity-50",
-    }[k]
-    legend = append(legend, <li class="flex items-center gap-2"><span aria-hidden="true" class={"inline-block size-3.5 rounded " + sw}></span>{a("gcLegend." + k)}</li>)
+    legend = append(legend, <li class={gc_legend_item}><span aria-hidden="true" class={GC_LEGEND[k]}></span>{a("gcLegend." + k)}</li>)
   }
   return (
-    <div class="flex flex-col gap-4 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-7">
-      <div class="flex flex-wrap items-center gap-2.5">
+    <div class={gc_demo}>
+      <div class={gc_controls}>
         <button data-slot="button" data-variant="default" data-size="default" class={core.btn("gc-mark")} disabled={phase.v == "marking"} onClick={mark}>1. {a("gcMark")}</button>
         <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("gc-sweep")} disabled={phase.v != "marked"} onClick={sweep}>2. {a("gcSweep")}</button>
         <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("gc-drop")} disabled={phase.v == "marking" || !has_s2} onClick={drop}>{a("gcGarbage")}</button>
         <button data-slot="button" data-variant="ghost" data-size="default" class={core.btn("gc-reset")} onClick={reset}>{a("gcReset")}</button>
       </div>
-      <p aria-live="polite" class="min-h-12 text-[15px] leading-relaxed text-foreground/85">{a("gcSteps." + phase.v)}</p>
-      <div class="overflow-x-auto">
-        <svg viewBox="0 0 660 300" class="min-w-[560px]" role="img" aria-label={a("gcRoots") + " → " + a("gcHeap")}>
+      <p aria-live="polite" class={gc_status}>{a("gcSteps." + phase.v)}</p>
+      <div class={gc_scroll}>
+        <svg viewBox="0 0 660 300" class={gc_svg} role="img" aria-label={a("gcRoots") + " → " + a("gcHeap")}>
           <defs>
             <marker id="gc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted-foreground)"></path>
             </marker>
           </defs>
-          <text x="60" y="20" text-anchor="middle" class="fill-muted-foreground text-[12px] font-medium">{a("gcRoots")}</text>
-          <text x="410" y="20" text-anchor="middle" class="fill-muted-foreground text-[12px] font-medium">{a("gcHeap")}</text>
+          <text x="60" y="20" text-anchor="middle" class={gc_heading}>{a("gcRoots")}</text>
+          <text x="410" y="20" text-anchor="middle" class={gc_heading}>{a("gcHeap")}</text>
           {lines}
           {roots}
           {objs}
         </svg>
       </div>
-      <ul class="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">{legend}</ul>
+      <ul class={gc_legend}>{legend}</ul>
     </div>
   )
 }
@@ -516,34 +620,32 @@ fn steps(items: []*json.Value, hot: []int) -> *ui.Node {
     for _, h := range hot {
       if h == i { is_hot = true }
     }
-    bg := "bg-card"
-    if is_hot { bg = "bg-accent" }
     out = append(out, (
-      <li class="relative flex flex-col">
-        <div class={"flex h-full flex-col gap-2 rounded-2xl p-5 shadow-[inset_0_0_0_1px_var(--color-border)] " + bg}>
-          <div class="flex items-center gap-2">
-            <span class="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
-            <h3 class="font-bold">{s.get_str("title", "")}</h3>
+      <li class={flow_step}>
+        <div class={style.pick(is_hot, flow_card_hot, flow_card)}>
+          <div class={flow_head}>
+            <span class={flow_number}>{i + 1}</span>
+            <h3 class={card_heading}>{s.get_str("title", "")}</h3>
           </div>
-          <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(s.get_str("desc", ""))}</p>
+          <p class={card_text}>{i18n.rich(s.get_str("desc", ""))}</p>
         </div>
         {ui.when(i + 1 < len(items), ui.frag([]*ui.Node{
-          icons.icon("arrow-right", "absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full bg-background text-primary md:block"),
-          icons.icon("arrow-down", "mx-auto my-1 size-5 text-primary md:hidden"),
+          icons.icon("arrow-right", flow_arrow_right),
+          icons.icon("arrow-down", flow_arrow_down),
         }))}
       </li>
     ))
   }
-  return <ol class="grid grid-cols-1 gap-3 md:grid-flow-col md:auto-cols-fr">{out}</ol>
+  return <ol class={flow}>{out}</ol>
 }
 
 fn frame_row(label: str, cells: []str, tone: str) -> *ui.Node {
   out := []*ui.Node{}
-  for _, c := range cells { out = append(out, <div class={"border-x border-t px-3 py-1.5 font-mono text-[13px] last:border-b " + tone}>{c}</div>) }
+  for _, c := range cells { out = append(out, <div class={frame_cell} data-tone={tone}>{c}</div>) }
   return (
-    <div class="flex items-center gap-3">
-      <span class="w-28 shrink-0 text-right text-xs text-muted-foreground">{label}</span>
-      <div class="flex flex-1 flex-col">{out}</div>
+    <div class={frame_line}>
+      <span class={frame_label}>{label}</span>
+      <div class={frame_cells}>{out}</div>
     </div>
   )
 }
@@ -551,20 +653,20 @@ fn frame_row(label: str, cells: []str, tone: str) -> *ui.Node {
 fn frame() -> *ui.Node {
   l := fn(k: str) -> str { return a("frameLabels." + k) }
   return (
-    <div class="flex flex-col gap-1.5 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
-      <div class="mb-1 text-sm font-bold">↑ {l("caller")}</div>
-      {frame_row(l("locals"), []str{"sum", "list ●"}, "bg-muted/60")}
-      {frame_row(l("args"), []str{"a = 2", "b = 3"}, "bg-accent")}
-      <div class="flex items-center gap-3">
-        <span class="w-28 shrink-0 text-right font-mono text-xs text-primary">{l("fp")} ($fp) →</span>
-        <div class="h-px flex-1 bg-primary"></div>
+    <div class={frame_box}>
+      <div class={frame_caller}>↑ {l("caller")}</div>
+      {frame_row(l("locals"), []str{"sum", "list ●"}, "locals")}
+      {frame_row(l("args"), []str{"a = 2", "b = 3"}, "args")}
+      <div class={frame_line}>
+        <span class={frame_pointer}>{l("fp")} ($fp) →</span>
+        <div class={frame_pointer_line}></div>
       </div>
-      <div class="mt-1 text-sm font-bold">↓ {l("callee")}</div>
-      {frame_row(l("locals"), []str{"x", "y ●"}, "bg-card")}
-      {frame_row(l("temps"), []str{"t ●"}, "bg-card")}
-      <div class="flex items-center gap-3">
-        <span class="w-28 shrink-0 text-right font-mono text-xs text-primary">{l("sp")} ($sp) →</span>
-        <div class="h-px flex-1 bg-primary"></div>
+      <div class={frame_callee}>↓ {l("callee")}</div>
+      {frame_row(l("locals"), []str{"x", "y ●"}, "callee")}
+      {frame_row(l("temps"), []str{"t ●"}, "callee")}
+      <div class={frame_line}>
+        <span class={frame_pointer}>{l("sp")} ($sp) →</span>
+        <div class={frame_pointer_line}></div>
       </div>
     </div>
   )
@@ -579,11 +681,10 @@ struct SectionProps {
 }
 
 fn Section(p: SectionProps) -> *ui.Node {
-  cls := "scroll-mt-20"
-  if p.alt { cls = "scroll-mt-20 bg-surface" }
+  cls := style.pick(p.alt, arch_section_alt, arch_section)
   return (
     <section id={p.id} aria-labelledby={p.id + "-h"} class={cls}>
-      <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+      <core.Container cls={core.SECTION}>
         <core.SectionTitle title={<span id={p.id + "-h"}>{p.title}</span>} lead={ui.text(p.lead)} />
         {p.children}
       </core.Container>
@@ -596,8 +697,8 @@ export fn Architecture() -> *ui.Node {
   toc := []*ui.Node{}
   for i, id := range toc_ids {
     toc = append(toc, (
-      <a href={"#" + id} class="inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary">
-        <span class="font-mono text-xs text-primary">{pad2(i + 1)}</span>
+      <a href={"#" + id} class={toc_chip}>
+        <span class={toc_chip_number}>{pad2(i + 1)}</span>
         {a(id + "Title")}
       </a>
     ))
@@ -605,25 +706,25 @@ export fn Architecture() -> *ui.Node {
   calls := []*ui.Node{}
   for _, c := range i18n.tv("arch.calls").items {
     calls = append(calls, (
-      <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
-        <h3 class="font-bold">{c.get_str("title", "")}</h3>
-        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(c.get_str("desc", ""))}</p>
+      <div class={info_card}>
+        <h3 class={card_heading}>{c.get_str("title", "")}</h3>
+        <p class={card_text}>{i18n.rich(c.get_str("desc", ""))}</p>
       </div>
     ))
   }
   tools := []*ui.Node{}
   for _, t := range i18n.tv("arch.tools").items {
     tools = append(tools, (
-      <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
-        <h3 class="font-mono font-bold text-primary">{t.get_str("title", "")}</h3>
-        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(t.get_str("desc", ""))}</p>
+      <div class={info_card}>
+        <h3 class={tool_heading}>{t.get_str("title", "")}</h3>
+        <p class={card_text}>{i18n.rich(t.get_str("desc", ""))}</p>
       </div>
     ))
   }
   return (
     <>
       <core.PageHero crumb={i18n.tr("nav.architecture")} title={a("title")} lead={ui.text(a("lead"))}>
-        <nav aria-label={a("onThisPage")} class="flex flex-wrap gap-2.5">{toc}</nav>
+        <nav aria-label={a("onThisPage")} class={toc_nav}>{toc}</nav>
       </core.PageHero>
 
       <Section id="pipeline" title={a("pipelineTitle")} lead={a("pipelineLead")} alt={false}>
@@ -632,11 +733,11 @@ export fn Architecture() -> *ui.Node {
 
       <Section id="bootstrap" title={a("bootstrapTitle")} lead={a("bootstrapLead")} alt={true}>
         {steps(i18n.tv("arch.bootstrap").items, []int{2, 3})}
-        <div class="flex flex-wrap items-center gap-3 font-mono text-sm">
-          <span class="rounded-lg bg-code px-3 py-1.5 text-code-text">cmp build/caju2 build/caju3 &amp;&amp; echo ok</span>
-          <span class="rounded-lg bg-accent px-3 py-1.5 text-accent-foreground">stage 2 == stage 3</span>
+        <div class={bootstrap_check}>
+          <span class={bootstrap_command}>cmp build/caju2 build/caju3 &amp;&amp; echo ok</span>
+          <span class={bootstrap_result}>stage 2 == stage 3</span>
         </div>
-        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(a("bootstrapNote"))}</p>
+        <p class={narrow_prose}>{i18n.rich(a("bootstrapNote"))}</p>
       </Section>
 
       <Section id="values" title={a("valuesTitle")} lead={a("valuesLead")} alt={false}>
@@ -645,27 +746,27 @@ export fn Architecture() -> *ui.Node {
 
       <Section id="gc" title={a("gcTitle")} lead={a("gcLead")} alt={true}>
         <GcDemo />
-        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(a("gcNote"))}</p>
+        <p class={narrow_prose}>{i18n.rich(a("gcNote"))}</p>
       </Section>
 
       <Section id="calls" title={a("callsTitle")} lead={a("callsLead")} alt={false}>
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div class={calls_grid}>
           {frame()}
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">{calls}</div>
+          <div class={calls_cards}>{calls}</div>
         </div>
       </Section>
 
       <Section id="browser" title={a("browserTitle")} lead={a("browserLead")} alt={true}>
         {steps(i18n.tv("arch.browser").items, []int{})}
         <div>
-          <a href={i18n.lp("/playground")} class="inline-flex h-12 items-center rounded-[14px] bg-primary px-6 font-bold text-primary-foreground hover:bg-brand-hover">{i18n.tr("nav.playground")} →</a>
+          <a href={i18n.lp("/playground")} class={playground_link}>{i18n.tr("nav.playground")} →</a>
         </div>
       </Section>
 
       <section aria-labelledby="tools-h">
-        <core.Container cls="flex flex-col gap-6 py-16">
-          <h2 id="tools-h" class="text-[28px] font-bold tracking-[-0.03em]">{a("toolsTitle")}</h2>
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">{tools}</div>
+        <core.Container cls={tools_body}>
+          <h2 id="tools-h" class={tools_title}>{a("toolsTitle")}</h2>
+          <div class={tools_grid}>{tools}</div>
         </core.Container>
       </section>
     </>

@@ -3,6 +3,25 @@ import ui "../caju-ui/ui"
 import "./i18n"
 import "./core"
 import "./pages/home"
+import style "../caju-style/style"
+
+let chip = style.def("example-chip", "inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary")
+let chip_count = style.def("example-chip-count", "rounded-full bg-accent px-2 py-0.5 font-mono text-xs text-accent-foreground")
+let chips_nav = style.def("example-chips", "flex flex-wrap gap-2.5")
+let example = style.def("example", "flex min-w-0 flex-col gap-4")
+let example_head = style.def("example-head", "flex flex-col gap-1.5")
+let example_title = style.def("example-title", "text-[22px] font-bold")
+let example_text = style.def("example-text", "text-[15px] leading-relaxed text-muted-foreground")
+let group_alt = style.def("example-group-alt", "bg-surface")
+let group_body = style.def("example-group-body", "@section gap-10")
+let group_title_row = style.def("example-group-title-row", "flex items-center gap-3")
+let group_dot = style.def("example-group-dot", "size-2.5 rounded-full bg-primary")
+let group_title = style.def("example-group-title", "text-[28px] font-bold tracking-[-0.03em] sm:text-[34px]")
+let group_grid = style.def("example-grid", "grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-2")
+let cta = style.def("examples-cta", "relative overflow-hidden bg-inverse text-inverse-foreground")
+let cta_pattern = style.def("examples-cta-pattern", "pointer-events-none absolute inset-0 text-[#C8232F] opacity-10 [mask-image:linear-gradient(90deg,transparent_40%,black_100%)]")
+let cta_body = style.def("examples-cta-body", "@page-width flex flex-wrap items-center justify-between gap-6 py-16")
+let cta_title = style.def("examples-cta-title", "text-[34px] font-bold tracking-[-0.03em] sm:text-[44px]")
 
 export fn Examples() -> *ui.Node {
   groups := i18n.C.get_array("examples.exampleGroups")
@@ -13,9 +32,9 @@ export fn Examples() -> *ui.Node {
     list := g.get_array("examples")
     name := i18n.tr("examples.groups." + id)
     chips = append(chips, (
-      <a href={"#" + id} class="inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary">
+      <a href={"#" + id} class={chip}>
         {name}
-        <span class="rounded-full bg-accent px-2 py-0.5 font-mono text-xs text-accent-foreground">{len(list)}</span>
+        <span class={chip_count}>{len(list)}</span>
       </a>
     ))
     items := []*ui.Node{}
@@ -23,25 +42,25 @@ export fn Examples() -> *ui.Node {
       file := x.get_str("file", "")
       info := i18n.tv("examples.items").field(file)
       items = append(items, (
-        <article class="flex min-w-0 flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <h3 class="text-[22px] font-bold">{info.get_str("title", "")}</h3>
-            <p class="text-[15px] leading-relaxed text-muted-foreground">{info.get_str("description", "")}</p>
+        <article class={example}>
+          <div class={example_head}>
+            <h3 class={example_title}>{info.get_str("title", "")}</h3>
+            <p class={example_text}>{info.get_str("description", "")}</p>
           </div>
           <core.CodeWindow file={file} code={x.get_str("code", "")} output={home.strs(x.get("output"))} flat={true} />
         </article>
       ))
     }
     let cls: any = nil
-    if gi % 2 == 1 { cls = "bg-surface" }
+    if gi % 2 == 1 { cls = group_alt }
     sections = append(sections, (
       <section id={id} aria-labelledby={id + "-h"} class={cls}>
-        <core.Container cls="flex flex-col gap-10 py-16 sm:py-20">
-          <div class="flex items-center gap-3">
-            <div aria-hidden="true" class="size-2.5 rounded-full bg-primary"></div>
-            <h2 id={id + "-h"} class="text-[28px] font-bold tracking-[-0.03em] sm:text-[34px]">{name}</h2>
+        <core.Container cls={group_body}>
+          <div class={group_title_row}>
+            <div aria-hidden="true" class={group_dot}></div>
+            <h2 id={id + "-h"} class={group_title}>{name}</h2>
           </div>
-          <div class="grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-2">{items}</div>
+          <div class={group_grid}>{items}</div>
         </core.Container>
       </section>
     ))
@@ -49,15 +68,15 @@ export fn Examples() -> *ui.Node {
   return (
     <>
       <core.PageHero crumb={i18n.tr("examples.title")} title={i18n.tr("examples.title")} lead={ui.frag(i18n.rt("examples.lead"))}>
-        <nav aria-label={i18n.tr("examples.groupsLabel")} class="flex flex-wrap gap-2.5">{chips}</nav>
+        <nav aria-label={i18n.tr("examples.groupsLabel")} class={chips_nav}>{chips}</nav>
       </core.PageHero>
       {sections}
-      <section class="relative overflow-hidden bg-inverse text-inverse-foreground">
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-[#C8232F] opacity-10 [mask-image:linear-gradient(90deg,transparent_40%,black_100%)]">
+      <section class={cta}>
+        <div aria-hidden="true" class={cta_pattern}>
           {core.cashew_pattern("examples-cta", "", "")}
         </div>
-        <core.Container cls="flex flex-wrap items-center justify-between gap-6 py-16">
-          <h2 class="text-[34px] font-bold tracking-[-0.03em] sm:text-[44px]">{i18n.tr("examples.ctaTitle")}</h2>
+        <core.Container cls={cta_body}>
+          <h2 class={cta_title}>{i18n.tr("examples.ctaTitle")}</h2>
           <a class={core.BIG_PRIMARY} href={i18n.lp("/") + "#install"}>{i18n.tr("examples.ctaButton")}</a>
         </core.Container>
       </section>

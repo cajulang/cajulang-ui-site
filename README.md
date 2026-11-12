@@ -9,8 +9,10 @@ components and served by a Caju server.
   the AI demo, the compiler pipeline, the garbage collector demo and the playground run there.
 - [web](https://github.com/aecdanjundex/web) routes the requests (the language redirects, the
   pages, the build's files), with each page rendered and gzipped once and then served from memory.
-- Tailwind CSS 4 compiles the classes used in the `.cajux` files, with the original's theme
-  (`styles/globals.css`) and fonts.
+- [caju style](https://github.com/aecdanjundex/caju-style) writes the CSS: each element has one
+  class with a readable name (`class={hero_title}` -> `class="hero-title"`), declared with
+  Tailwind's utility vocabulary in Caju (`style.def("hero-title", "text-[44px] font-bold ...")`)
+  and compiled by Caju, with no Node and no Tailwind (`site_css.caju`, the theme in `theme.caju`).
 
 Every page, in every language, renders pixel for pixel like the original (`tools/compare.mjs`),
 and the interactive parts behave the same (`tools/interact.mjs`). Loading and server performance
@@ -23,6 +25,9 @@ app.cajux            the root: layout + page
 core.cajux           shared pieces: header (language menu, theme, mobile menu), footer, hero,
                      code windows, copy buttons, the brand's icon
 pages/*.cajux        home, examples, spec, mcp, architecture, brand, playground
+theme.caju           the theme for caju style: palette, radii, fonts, variants, base rules
+site_css.caju        writes public/site.css from every style.def of the site
+styles/fonts.css     the @font-face rules of the original's fonts
 i18n.caju            language, dictionary, number formatting, rich text
 highlight.caju       Caju syntax highlighting (the original's rules)
 icons.caju           the Lucide icons the site uses (generated: tools/export-icons.mjs)
@@ -36,18 +41,37 @@ public/site.js       what only the page can do (theme, storage, history, the pla
 ## Running it
 
 Needs `caju` (0.5.0), a checkout of [ui](https://github.com/aecdanjundex/ui) next to this one
-(`../caju-ui`, with `caju build -o build/caju-ui cmd/caju-ui.caju` run in it) and Node (for the
-Tailwind CLI).
+(`../caju-ui`, with `caju build -o build/caju-ui cmd/caju-ui.caju` run in it) and one of
+[caju style](https://github.com/aecdanjundex/caju-style) (`../caju-style`). Node is only for the
+comparison tools (Playwright).
 
 ```sh
-npm install                      # Tailwind CLI
 caju pkg install                 # web
 tools/fetch-caju.sh              # the compiler for the playground (public/caju)
-tools/build.sh                   # CSS, the program (wasm) and the server
+tools/build.sh                   # the program (wasm), the server and the CSS
 ./server                         # http://localhost:3000 (PORT)
 ```
 
-Development, with hot reload: `npx tailwindcss -i styles/globals.css -o public/site.css --watch` and
-`../caju-ui/build/caju-ui dev --ssr server.cajux`.
+Development, with hot reload: `../caju-ui/build/caju-ui dev --ssr server.cajux`, and
+`caju run site_css.caju` after changing a style (it also warns about utilities it does not know).
 
-`ui` is imported by path (`../caju-ui/ui`) until it has a published version.
+## Styles
+
+Each piece of the page declares its styles next to it, as module variables:
+
+```caju
+let stat = style.def("stat", "flex flex-col gap-1 border-l-[3px] border-primary px-6 py-5")
+let bar_fill = style.def("bar-fill", "h-2.5 rounded-full bg-bar-other")
+let bar_fill_caju = style.def("bar-fill-caju", "@bar-fill bg-primary")    # bar-fill, in red
+
+<div class={stat}>...</div>
+<div class={style.pick(is_caju, bar_fill_caju, bar_fill)}></div>
+```
+
+The shared ones are in `core.cajux` (the `button` family, `card`, `page-width`, `section`, the
+code window...); a page composes them with `@name` (`"@card gap-3 rounded-[20px] p-7"`). States
+that come from data are data attributes (`data-[tone=ptr]:bg-accent`) rather than more classes.
+`tools/styles-diff.mjs` compares the computed style of every element with the original's.
+
+`ui` and caju style are imported by path (`../caju-ui/ui`, `../caju-style/style`) until they have
+published versions.

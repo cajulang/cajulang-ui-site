@@ -6,59 +6,59 @@ import "std/strings"
 import "./i18n"
 import "./icons"
 import "./highlight"
+import style "../caju-style/style"
 
 # ---------------------------------------------------------------------------------------------
-# Buttons: the classes the original site's <Button> renders for each use
+# Styles shared by the pages (caju style: each def is one class, named as given)
 
-const BTN_A = "group/button inline-flex shrink-0 items-center justify-center"
-const BTN_Z = "whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0"
-const SVG4 = "[&_svg:not([class*='size-'])]:size-4"
-const OUTLINE = "border-border hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:hover:bg-input/50"
-const OUTLINE_BG = "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
-const GHOST = "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50"
-const ICON_SM = "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg"
-const HAS_ICON = "has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2"
+# buttons: the base, the outline and ghost looks, then each use
+let button = style.def("button", "inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [:where(&_svg)]:size-4")
+let button_outline = style.def("button-outline", "@button border-border hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:hover:bg-input/50")
+let button_outline_filled = style.def("button-outline-filled", "@button-outline bg-background dark:bg-input/30")
+let button_ghost = style.def("button-ghost", "@button hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50")
+let button_primary = style.def("button-primary", "@button bg-primary text-primary-foreground hover:bg-primary/80")
+# the small square icon buttons (copy, close)
+let icon_button = style.def("icon-button", "@button aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 size-7 rounded-[min(var(--radius-md),12px)]")
 
-export fn btn(kind: str) -> str {
-  switch kind {
-  case "lang": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE + " " + HAS_ICON + " h-11 gap-2 rounded-xl bg-transparent px-3 dark:bg-transparent"
-  case "theme": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE + " size-11 rounded-xl bg-transparent dark:bg-transparent"
-  case "install": return BTN_A + " border border-transparent bg-clip-padding " + BTN_Z + " " + SVG4 + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl bg-foreground px-5 text-[15px] font-bold text-background hover:bg-foreground/85"
-  case "menu": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " size-11 rounded-xl"
-  case "copy-page": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " hover:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-muted-foreground hover:text-foreground"
-  case "copy-code": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-code-dim hover:bg-white/10 hover:text-code-text"
-  case "copy-inverse": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-inverse-muted hover:bg-inverse-foreground/10 hover:text-inverse-foreground"
-  case "copy-swatch": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg size-7 text-current opacity-70 hover:bg-black/10 hover:text-current hover:opacity-100"
-  case "close": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " " + ICON_SM + " absolute top-3 right-3"
+let BUTTONS = map[str]str{
+  "lang": style.def("language-button", "@button-outline h-11 gap-2 rounded-xl bg-transparent px-3 dark:bg-transparent"),
+  "theme": style.def("theme-button", "@button-outline size-11 rounded-xl bg-transparent dark:bg-transparent"),
+  "install": style.def("install-button", "@button h-11 gap-1.5 rounded-xl bg-foreground px-5 text-[15px] font-bold text-background hover:bg-foreground/85"),
+  "menu": style.def("menu-button", "@button-outline-filled size-11 rounded-xl"),
+  "copy-page": style.def("copy-button", "@icon-button hover:bg-muted text-muted-foreground hover:text-foreground"),
+  "copy-code": style.def("copy-code-button", "@icon-button text-code-dim hover:bg-white/10 hover:text-code-text"),
+  "copy-inverse": style.def("copy-inverse-button", "@icon-button text-inverse-muted hover:bg-inverse-foreground/10 hover:text-inverse-foreground"),
+  "copy-swatch": style.def("copy-swatch-button", "@icon-button text-current opacity-70 hover:bg-black/10 hover:text-current hover:opacity-100"),
+  "close": style.def("close-button", "@button-ghost size-7 rounded-[min(var(--radius-md),12px)] absolute top-3 right-3"),
   # AI demo and GC demo
-  case "outline-10": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 px-2.5 " + HAS_ICON + " h-10 rounded-xl"
-  case "primary-10": return BTN_A + " border border-transparent bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " bg-primary text-primary-foreground hover:bg-primary/80 gap-1.5 px-2.5 " + HAS_ICON + " h-10 rounded-xl font-bold"
-  case "gc-mark": return BTN_A + " border border-transparent bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " bg-primary text-primary-foreground hover:bg-primary/80 gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4 font-bold"
-  case "gc-sweep": return BTN_A + " border bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4 font-bold"
-  case "gc-drop": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4"
-  case "gc-reset": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4"
+  "outline-10": style.def("step-back-button", "@button-outline-filled h-10 gap-1.5 rounded-xl px-2.5"),
+  "primary-10": style.def("step-next-button", "@button-primary h-10 gap-1.5 rounded-xl px-2.5 font-bold"),
+  "gc-mark": style.def("gc-mark-button", "@button-primary h-10 gap-1.5 rounded-xl px-4 font-bold"),
+  "gc-sweep": style.def("gc-sweep-button", "@button-outline-filled h-10 gap-1.5 rounded-xl px-4 font-bold"),
+  "gc-drop": style.def("gc-drop-button", "@button-outline-filled h-10 gap-1.5 rounded-xl px-4"),
+  "gc-reset": style.def("gc-reset-button", "@button-ghost h-10 gap-1.5 rounded-xl px-4"),
   # brand page download link
-  case "download": return BTN_A + " border border-transparent bg-clip-padding font-medium " + BTN_Z + " aria-expanded:bg-muted aria-expanded:text-foreground h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5 text-current hover:bg-black/10 hover:text-current dark:hover:bg-black/10"
+  "download": style.def("download-button", "@button text-[0.8rem] aria-expanded:bg-muted aria-expanded:text-foreground h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 [:where(&_svg)]:size-3.5 text-current hover:bg-black/10 hover:text-current dark:hover:bg-black/10"),
   # playground
-  case "run": return BTN_A + " border border-transparent bg-clip-padding " + BTN_Z + " " + SVG4 + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl bg-primary px-5 text-[15px] font-bold text-primary-foreground hover:bg-brand-hover"
-  case "stop": return BTN_A + " border bg-clip-padding " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-5 text-[15px] font-bold"
-  case "share": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-4"
-  case "reset": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-3 text-muted-foreground"
-  }
-  return ""
+  "run": style.def("run-button", "@button h-11 gap-1.5 rounded-xl bg-primary px-5 text-[15px] font-bold text-primary-foreground hover:bg-brand-hover"),
+  "stop": style.def("stop-button", "@button-outline-filled h-11 gap-1.5 rounded-xl px-5 text-[15px] font-bold"),
+  "share": style.def("share-button", "@button-outline-filled h-11 gap-1.5 rounded-xl px-4"),
+  "reset": style.def("reset-button", "@button-ghost h-11 gap-1.5 rounded-xl px-3 text-muted-foreground"),
 }
 
-# the big call-to-action links of the design
-export const BIG_PRIMARY = "inline-flex h-14 items-center justify-center rounded-[14px] bg-primary px-[26px] text-[17px] font-bold text-primary-foreground transition-colors hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-export const BIG_OUTLINE = "inline-flex h-14 items-center justify-center rounded-[14px] px-[26px] text-[17px] font-bold text-foreground shadow-[inset_0_0_0_2px_var(--color-foreground)] transition-colors hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+export fn btn(kind: str) -> str { return BUTTONS[kind] }
 
-# a Card (shadcn) with the original's merged classes; extra goes at the end
-const CARD_HEAD = "group/card flex flex-col"
-const CARD_TAIL = "overflow-hidden bg-card text-sm text-card-foreground ring-1 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl"
-# with gap and padding given by the use (gap-* and p-* replace the card's own)
-export fn card_class(extra: str) -> str { return CARD_HEAD + " " + CARD_TAIL + " " + extra }
-# keeping the card's gap (uses that only set rounding and padding)
-export fn card_class_gap(extra: str) -> str { return CARD_HEAD + " gap-(--card-spacing) " + CARD_TAIL + " " + extra }
+# the big call-to-action links of the design
+export let BIG_PRIMARY = style.def("cta-primary", "inline-flex h-14 items-center justify-center rounded-[14px] bg-primary px-[26px] text-[17px] font-bold text-primary-foreground transition-colors hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring")
+export let BIG_OUTLINE = style.def("cta-outline", "inline-flex h-14 items-center justify-center rounded-[14px] px-[26px] text-[17px] font-bold text-foreground shadow-[inset_0_0_0_2px_var(--color-foreground)] transition-colors hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring")
+
+# a card (shadcn/ui's): the pages add the gap, padding and rounding: "@card gap-3 p-7 rounded-[20px]"
+let card = style.def("card", "flex flex-col gap-4 overflow-hidden bg-card text-sm text-card-foreground ring-1 ring-border")
+
+# the content column, and the usual section inside it
+let page_width = style.def("page-width", "relative z-10 mx-auto max-w-[1200px] px-4 sm:px-6")
+export let SECTION = style.def("section", "@page-width flex flex-col gap-8 py-16 sm:py-20")
+export let SECTION_WIDE = style.def("section-wide", "@page-width flex flex-col gap-11 py-20 sm:py-24")
 
 # ---------------------------------------------------------------------------------------------
 # The brand
@@ -80,11 +80,16 @@ export fn variant_colors(v: str) -> []str {
 
 export const VARIANTS = "principal invertido caju mono mono-escuro"
 
-# the cashew icon, as an <svg> (title "": decorative)
+let caju_icon_style = style.def("caju-icon", "shrink-0")
+# the icons of the light and the dark theme, one of them hidden
+export let ICON_LIGHT = style.def("caju-icon-light", "@caju-icon dark:hidden")
+export let ICON_DARK = style.def("caju-icon-dark", "@caju-icon hidden dark:block")
+
+# the cashew icon, as an <svg> (title "": decorative); cls: a style made "@caju-icon ..."
 export fn caju_icon(variant: str, size: int, cls: str, title: str) -> *ui.Node {
   c := variant_colors(variant)
-  klass := "shrink-0"
-  if cls != "" { klass = klass + " " + cls }
+  klass := caju_icon_style
+  if cls != "" { klass = cls }
   let role: any = nil
   let label: any = nil
   let hidden: any = "true"
@@ -116,14 +121,8 @@ export fn caju_icon(variant: str, size: int, cls: str, title: str) -> *ui.Node {
 }
 
 # the principal icon in the light theme, the inverted one in the dark theme (CSS only)
-export fn themed_icon(size: int, cls: str, title: str) -> *ui.Node {
-  a := "dark:hidden"
-  b := "hidden dark:block"
-  if cls != "" {
-    a = a + " " + cls
-    b = b + " " + cls
-  }
-  return ui.frag([]*ui.Node{caju_icon("principal", size, a, title), caju_icon("invertido", size, b, title)})
+export fn themed_icon(size: int, title: str) -> *ui.Node {
+  return ui.frag([]*ui.Node{caju_icon("principal", size, ICON_LIGHT, title), caju_icon("invertido", size, ICON_DARK, title)})
 }
 
 fn one_cashew(x: str, y: str, r: str, color: str) -> *ui.Node {
@@ -157,8 +156,14 @@ export fn cashew_pattern(id: str, color: str, cls: str) -> *ui.Node {
   )
 }
 
+let wordmark_style = style.def("wordmark", "font-bold tracking-[-0.04em] text-foreground")
+let wordmark_lang = style.def("wordmark-lang", "text-primary")
+let wordmark_header = style.def("wordmark-header", "@wordmark text-[26px]")
+let wordmark_small = style.def("wordmark-small", "@wordmark text-xl")
+
+# "cajulang" in the brand's type; cls: a style made "@wordmark ..."
 export fn wordmark(cls: str) -> *ui.Node {
-  return <span class={"font-bold tracking-[-0.04em] text-foreground " + cls}>caju<span class="text-primary">lang</span></span>
+  return <span class={cls}>caju<span class={wordmark_lang}>lang</span></span>
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -169,9 +174,10 @@ export struct ContainerProps {
   children: []*ui.Node
 }
 
+# the content column; cls: a style made "@page-width ..." (SECTION, SECTION_WIDE...)
 export fn Container(p: ContainerProps) -> *ui.Node {
-  cls := "relative z-10 mx-auto max-w-[1200px] px-4 sm:px-6"
-  if p.cls != "" { cls = cls + " " + p.cls }
+  cls := page_width
+  if p.cls != "" { cls = p.cls }
   return <div class={cls}>{p.children}</div>
 }
 
@@ -182,23 +188,29 @@ export struct SectionTitleProps {
   h1: bool
 }
 
+let section_title = style.def("section-title", "flex flex-col gap-3")
+let section_heading = style.def("section-heading", "text-balance text-[34px] leading-[1.1] font-bold tracking-[-0.035em] sm:text-[44px]")
+# the lead paragraph under the titles
+export let LEAD = style.def("lead", "max-w-[680px] text-lg leading-relaxed text-muted-foreground")
+
+# a section's title and lead; cls: a style made "@section-title ..."
 export fn SectionTitle(p: SectionTitleProps) -> *ui.Node {
-  cls := "flex flex-col gap-3"
-  if p.cls != "" { cls = cls + " " + p.cls }
-  hc := "text-balance text-[34px] leading-[1.1] font-bold tracking-[-0.035em] sm:text-[44px]"
-  heading := ui.either(p.h1, <h1 class={hc}>{p.title}</h1>, <h2 class={hc}>{p.title}</h2>)
+  cls := section_title
+  if p.cls != "" { cls = p.cls }
+  heading := ui.either(p.h1, <h1 class={section_heading}>{p.title}</h1>, <h2 class={section_heading}>{p.title}</h2>)
   return (
     <div class={cls}>
       {heading}
-      {ui.when(p.lead != nil, <p class="max-w-[680px] text-lg leading-relaxed text-muted-foreground">{p.lead}</p>)}
+      {ui.when(p.lead != nil, <p class={LEAD}>{p.lead}</p>)}
     </div>
   )
 }
 
+let step = style.def("step-number", "flex size-8 shrink-0 items-center justify-center rounded-full text-[15px] font-bold bg-accent text-accent-foreground")
+let step_solid = style.def("step-number-solid", "@step-number bg-[#C8232F] text-[#FFF4E6]")
+
 export fn step_number(n: int, solid: bool) -> *ui.Node {
-  tone := "bg-accent text-accent-foreground"
-  if solid { tone = "bg-[#C8232F] text-[#FFF4E6]" }
-  return <div aria-hidden="true" class={"flex size-8 shrink-0 items-center justify-center rounded-full text-[15px] font-bold " + tone}>{n}</div>
+  return <div aria-hidden="true" class={style.pick(solid, step_solid, step)}>{n}</div>
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -233,46 +245,67 @@ export struct CodeWindowProps {
   flat: bool        # the light shadow (code windows inside page sections)
 }
 
+let code_window = style.def("code-window", "min-w-0 overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]")
+let code_window_flat = style.def("code-window-flat", "@code-window shadow-[0_0_0_1px_var(--color-code-ring)]")
+let code_bar = style.def("code-bar", "flex h-10 items-end justify-between bg-code-bar pl-3 pr-2")
+let code_tab = style.def("code-tab", "flex h-[34px] items-center gap-2 border-t-2 border-tok-kw bg-code px-4 font-mono text-[13px]")
+let code_copy = style.def("code-copy-button", "@copy-code-button mb-1")
+let code_body = style.def("code-body", "overflow-x-auto px-6 py-5 font-mono text-sm leading-[1.7]")
+let code_line = style.def("code-line", "flex gap-[18px]")
+let line_number = style.def("line-number", "min-w-[18px] select-none text-right text-code-gutter")
+let line_text = style.def("line-text", "whitespace-pre")
+let code_output = style.def("code-output", "@terminal-output border-t border-code-line bg-code-bar")
+let output_line = style.def("output-line", "whitespace-pre-wrap break-all")
+let output_command = style.def("output-command", "@output-line text-code-dim")
+let terminal_output = style.def("terminal-output", "px-6 py-4 font-mono text-sm leading-relaxed")
+
 export fn CodeWindow(p: CodeWindowProps) -> *ui.Node {
-  shadow := "shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]"
-  if p.flat { shadow = "shadow-[0_0_0_1px_var(--color-code-ring)]" }
   rows := []*ui.Node{}
   for i, line := range strings.split(p.code, "\n") {
     rows = append(rows, (
-      <div class="flex gap-[18px]">
-        <span aria-hidden="true" class="min-w-[18px] select-none text-right text-code-gutter">{i + 1}</span>
-        <span class="whitespace-pre">{highlight.line_nodes(line)}</span>
+      <div class={code_line}>
+        <span aria-hidden="true" class={line_number}>{i + 1}</span>
+        <span class={line_text}>{highlight.line_nodes(line)}</span>
       </div>
     ))
   }
   return (
-    <figure class={"min-w-0 overflow-hidden rounded-2xl bg-code text-code-text " + shadow}>
-      <div class="flex h-10 items-end justify-between bg-code-bar pl-3 pr-2">
-        <figcaption class="flex h-[34px] items-center gap-2 border-t-2 border-tok-kw bg-code px-4 font-mono text-[13px]">
+    <figure class={style.pick(p.flat, code_window_flat, code_window)}>
+      <div class={code_bar}>
+        <figcaption class={code_tab}>
           {caju_icon("principal", 16, "", "")}
           {p.file}
         </figcaption>
-        <CopyButton text={p.code} label={i18n.tr("ui.copy") + ": " + p.file} cls={btn("copy-code") + " mb-1"} />
+        <CopyButton text={p.code} label={i18n.tr("ui.copy") + ": " + p.file} cls={code_copy} />
       </div>
-      <pre class="overflow-x-auto px-6 py-5 font-mono text-sm leading-[1.7]"><code>{rows}</code></pre>
-      {ui.when(len(p.output) > 0, terminal_lines(p.output, "border-t border-code-line bg-code-bar"))}
+      <pre class={code_body}><code>{rows}</code></pre>
+      {ui.when(len(p.output) > 0, terminal_lines(p.output, code_output))}
     </figure>
   )
 }
 
+# the output of a program; cls: a style made "@terminal-output ..." ("" for the plain one)
 export fn terminal_lines(lines: []str, cls: str) -> *ui.Node {
   out := []*ui.Node{}
   for _, l := range lines {
     if strings.has_prefix(l, "$ ") {
-      out = append(out, <div class="whitespace-pre-wrap break-all text-code-dim">{l}</div>)
+      out = append(out, <div class={output_command}>{l}</div>)
     } else {
       text := l
       if l == "" { text = " " }
-      out = append(out, <div class="whitespace-pre-wrap break-all">{text}</div>)
+      out = append(out, <div class={output_line}>{text}</div>)
     }
   }
-  return <div class={"px-6 py-4 font-mono text-sm leading-relaxed " + cls}>{out}</div>
+  if cls == "" { cls = terminal_output }
+  return <div class={cls}>{out}</div>
 }
+
+let terminal_window = style.def("terminal", "min-w-0 overflow-hidden rounded-2xl bg-code shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]")
+let terminal_bar = style.def("terminal-bar", "flex h-10 items-center bg-code-bar px-4 font-mono text-[13px] text-code-dim")
+let terminal_body = style.def("terminal-body", "flex flex-col gap-0.5 px-6 py-5 font-mono text-sm leading-[1.75]")
+let terminal_command = style.def("terminal-command", "@output-line text-code-text")
+let terminal_prompt = style.def("terminal-prompt", "text-tok-kw")
+let terminal_reply = style.def("terminal-reply", "@output-line text-[#b8a99a]")
 
 # a terminal session: commands in light text with an orange prompt, output dimmed
 export fn terminal(lines: []str, title: str) -> *ui.Node {
@@ -280,15 +313,15 @@ export fn terminal(lines: []str, title: str) -> *ui.Node {
   out := []*ui.Node{}
   for _, l := range lines {
     if strings.has_prefix(l, "$ ") {
-      out = append(out, <div class="whitespace-pre-wrap break-all text-code-text"><span class="text-tok-kw">$ </span>{l[2:]}</div>)
+      out = append(out, <div class={terminal_command}><span class={terminal_prompt}>$ </span>{l[2:]}</div>)
     } else {
-      out = append(out, <div class="whitespace-pre-wrap break-all text-[#b8a99a]">{l}</div>)
+      out = append(out, <div class={terminal_reply}>{l}</div>)
     }
   }
   return (
-    <div class="min-w-0 overflow-hidden rounded-2xl bg-code shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]">
-      <div class="flex h-10 items-center bg-code-bar px-4 font-mono text-[13px] text-code-dim">{title}</div>
-      <div class="flex flex-col gap-0.5 px-6 py-5 font-mono text-sm leading-[1.75]">{out}</div>
+    <div class={terminal_window}>
+      <div class={terminal_bar}>{title}</div>
+      <div class={terminal_body}>{out}</div>
     </div>
   )
 }
@@ -303,19 +336,27 @@ export struct PageHeroProps {
   children: []*ui.Node
 }
 
+let hero = style.def("page-hero", "relative overflow-hidden border-b")
+let hero_pattern = style.def("page-hero-pattern", "pointer-events-none absolute inset-0 text-primary opacity-[0.14] [mask-image:radial-gradient(ellipse_50%_90%_at_100%_20%,black_20%,transparent_75%)]")
+let hero_body = style.def("page-hero-body", "@page-width flex flex-col gap-5 py-14 sm:py-20")
+let breadcrumb = style.def("breadcrumb", "text-sm text-muted-foreground")
+let breadcrumb_link = style.def("breadcrumb-link", "hover:text-foreground")
+let hero_title = style.def("page-hero-title", "text-[42px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[56px]")
+let hero_extra = style.def("page-hero-extra", "pt-2")
+
 export fn PageHero(p: PageHeroProps) -> *ui.Node {
   return (
-    <section class="relative overflow-hidden border-b">
-      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary opacity-[0.14] [mask-image:radial-gradient(ellipse_50%_90%_at_100%_20%,black_20%,transparent_75%)]">
+    <section class={hero}>
+      <div aria-hidden="true" class={hero_pattern}>
         {cashew_pattern("page-hero-pattern", "", "")}
       </div>
-      <Container cls="flex flex-col gap-5 py-14 sm:py-20">
-        <nav aria-label={i18n.tr("ui.breadcrumb")} class="text-sm text-muted-foreground">
-          <a class="hover:text-foreground" href={i18n.lp("/")}>{i18n.tr("ui.home")}</a> / <span aria-current="page">{p.crumb}</span>
+      <Container cls={hero_body}>
+        <nav aria-label={i18n.tr("ui.breadcrumb")} class={breadcrumb}>
+          <a class={breadcrumb_link} href={i18n.lp("/")}>{i18n.tr("ui.home")}</a> / <span aria-current="page">{p.crumb}</span>
         </nav>
-        <h1 class="text-[42px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[56px]">{p.title}</h1>
-        <p class="max-w-[680px] text-lg leading-relaxed text-muted-foreground">{p.lead}</p>
-        {ui.when(len(p.children) > 0, <div class="pt-2">{p.children}</div>)}
+        <h1 class={hero_title}>{p.title}</h1>
+        <p class={LEAD}>{p.lead}</p>
+        {ui.when(len(p.children) > 0, <div class={hero_extra}>{p.children}</div>)}
       </Container>
     </section>
   )
@@ -324,8 +365,12 @@ export fn PageHero(p: PageHeroProps) -> *ui.Node {
 # ---------------------------------------------------------------------------------------------
 # Header
 
-const ITEM = "group/dropdown-menu-item relative cursor-default items-center rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive flex justify-between gap-4 hover:bg-accent hover:text-accent-foreground"
-const MENU = "z-50 max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 min-w-40 absolute top-full right-0 mt-1"
+let menu_item = style.def("menu-item", "relative flex cursor-default items-center justify-between gap-4 rounded-md px-1.5 py-1 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [:where(&_svg)]:size-4")
+let menu = style.def("menu", "absolute top-full right-0 z-50 mt-1 min-w-40 overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2")
+let menu_label = style.def("menu-label", "px-1.5 py-1 text-xs font-medium text-muted-foreground")
+let menu_backdrop = style.def("menu-backdrop", "fixed inset-0 z-40")
+let language_menu = style.def("language-menu", "relative")
+let language_code = style.def("language-code", "font-mono text-sm uppercase")
 
 # the same page in another language: the first segment of the path swapped
 fn in_lang(l: str) -> str {
@@ -345,7 +390,7 @@ fn LanguageMenu() -> *ui.Node {
     let cur: any = nil
     if l == i18n.LANG { cur = "true" }
     items = append(items, (
-      <a data-slot="dropdown-menu-item" data-variant="default" class={ITEM} role="menuitem" href={in_lang(l)} hreflang={hl} lang={hl} data-set-locale={l} aria-current={cur}>
+      <a data-slot="dropdown-menu-item" data-variant="default" class={menu_item} role="menuitem" href={in_lang(l)} hreflang={hl} lang={hl} data-set-locale={l} aria-current={cur}>
         {i18n.locale_name(l)}
         {ui.when(l == i18n.LANG, icons.icon("check", ""))}
       </a>
@@ -358,16 +403,16 @@ fn LanguageMenu() -> *ui.Node {
     state = "open"
   }
   return (
-    <div class="relative">
+    <div class={language_menu}>
       <button data-slot="dropdown-menu-trigger" data-variant="outline" data-size="default" class={btn("lang")} aria-label={label} type="button" aria-haspopup="menu" aria-expanded={expanded} data-state={state} onClick={fn() { open.toggle() }}>
         {icons.icon("languages", "")}
-        <span class="font-mono text-sm uppercase">{i18n.LANG}</span>
+        <span class={language_code}>{i18n.LANG}</span>
       </button>
       {ui.when(open.v, (
         <>
-          <div class="fixed inset-0 z-40" onClick={fn() { open.set(false) }}></div>
-          <div data-slot="dropdown-menu-content" role="menu" data-state="open" data-side="bottom" class={MENU} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { open.set(false) } }}>
-            <div data-slot="dropdown-menu-label" class="px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7">{label}</div>
+          <div class={menu_backdrop} onClick={fn() { open.set(false) }}></div>
+          <div data-slot="dropdown-menu-content" role="menu" data-state="open" data-side="bottom" class={menu} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { open.set(false) } }}>
+            <div data-slot="dropdown-menu-label" class={menu_label}>{label}</div>
             {items}
           </div>
         </>
@@ -399,8 +444,19 @@ fn ThemeToggle() -> *ui.Node {
   )
 }
 
-const LINK = "rounded-md px-1 py-2.5 text-base font-medium whitespace-nowrap text-foreground/85 transition-colors hover:text-primary aria-[current=page]:text-primary"
-const SHEET = "fixed z-50 flex flex-col gap-4 bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10 w-72 bg-background p-6"
+let nav_link = style.def("nav-link", "rounded-md px-1 py-2.5 text-base font-medium whitespace-nowrap text-foreground/85 transition-colors hover:text-primary aria-[current=page]:text-primary")
+let sheet_style = style.def("sheet", "fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col gap-4 border-l bg-background bg-clip-padding p-6 text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out sm:max-w-sm animate-in fade-in-0 slide-in-from-right-10")
+let sheet_overlay = style.def("sheet-overlay", "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs animate-in fade-in-0")
+let sheet_title = style.def("sheet-title", "flex items-center gap-2 font-heading text-base font-medium text-foreground")
+let sheet_nav = style.def("sheet-nav", "mt-4 flex flex-col")
+let sheet_link = style.def("sheet-link", "rounded-lg px-2 py-3 text-lg font-medium hover:bg-muted aria-[current=page]:text-primary")
+let sheet_install = style.def("sheet-install", "mt-4 rounded-xl bg-primary px-4 py-3 text-center font-bold text-primary-foreground")
+let sr_only = style.def("sr-only", "sr-only")
+let header = style.def("header", "sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75")
+let header_row = style.def("header-row", "mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-4 py-3 sm:px-6")
+let home_link = style.def("home-link", "flex items-center gap-3 rounded-lg")
+let desktop_nav = style.def("desktop-nav", "hidden items-center gap-5 xl:flex")
+let mobile_nav = style.def("mobile-nav", "flex items-center gap-2 xl:hidden")
 
 struct NavItem {
   href: str
@@ -430,9 +486,9 @@ fn Header() -> *ui.Node {
   desktop := []*ui.Node{}
   mobile := []*ui.Node{}
   for _, it := range nav_items() {
-    desktop = append(desktop, <a aria-current={current(it.href)} class={LINK} href={it.href}>{it.label}</a>)
+    desktop = append(desktop, <a aria-current={current(it.href)} class={nav_link} href={it.href}>{it.label}</a>)
     mobile = append(mobile, (
-      <a aria-current={current(it.href)} class="rounded-lg px-2 py-3 text-lg font-medium hover:bg-muted aria-[current=page]:text-primary" href={it.href} onClick={fn() { sheet.set(false) }}>{it.label}</a>
+      <a aria-current={current(it.href)} class={sheet_link} href={it.href} onClick={fn() { sheet.set(false) }}>{it.label}</a>
     ))
   }
   sheet_state := "closed"
@@ -445,19 +501,19 @@ fn Header() -> *ui.Node {
   # containing block of the sheet's fixed position (the original renders it in a portal)
   return (
     <>
-    <header class="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div class="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <a aria-label={i18n.tr("ui.homeLabel")} class="flex items-center gap-3 rounded-lg" href={i18n.lp("/")}>
-          {themed_icon(40, "", "")}
-          {wordmark("text-[26px]")}
+    <header class={header}>
+      <div class={header_row}>
+        <a aria-label={i18n.tr("ui.homeLabel")} class={home_link} href={i18n.lp("/")}>
+          {themed_icon(40, "")}
+          {wordmark(wordmark_header)}
         </a>
-        <nav aria-label="Main" class="hidden items-center gap-5 xl:flex">
+        <nav aria-label="Main" class={desktop_nav}>
           {desktop}
           <LanguageMenu />
           <ThemeToggle />
           <a data-slot="button" data-variant="default" data-size="default" class={btn("install")} href={install}>{i18n.tr("nav.install")}</a>
         </nav>
-        <div class="flex items-center gap-2 xl:hidden">
+        <div class={mobile_nav}>
           <LanguageMenu />
           <ThemeToggle />
           <button data-slot="sheet-trigger" data-variant="outline" data-size="icon-lg" class={btn("menu")} aria-label={i18n.tr("ui.openMenu")} type="button" aria-haspopup="dialog" aria-expanded={sheet_expanded} data-state={sheet_state} onClick={fn() { sheet.set(true) }}>
@@ -468,19 +524,19 @@ fn Header() -> *ui.Node {
     </header>
       {ui.when(sheet.v, (
         <>
-          <div data-slot="sheet-overlay" data-state="open" class="fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" onClick={fn() { sheet.set(false) }}></div>
-          <div data-slot="sheet-content" data-side="right" data-state="open" role="dialog" class={SHEET} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { sheet.set(false) } }}>
-            <h2 data-slot="sheet-title" class="font-heading text-base font-medium text-foreground flex items-center gap-2">
-              {themed_icon(28, "", "")}
-              {wordmark("text-xl")}
+          <div data-slot="sheet-overlay" data-state="open" class={sheet_overlay} onClick={fn() { sheet.set(false) }}></div>
+          <div data-slot="sheet-content" data-side="right" data-state="open" role="dialog" class={sheet_style} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { sheet.set(false) } }}>
+            <h2 data-slot="sheet-title" class={sheet_title}>
+              {themed_icon(28, "")}
+              {wordmark(wordmark_small)}
             </h2>
-            <nav aria-label="Main" class="mt-4 flex flex-col">
+            <nav aria-label="Main" class={sheet_nav}>
               {mobile}
-              <a class="mt-4 rounded-xl bg-primary px-4 py-3 text-center font-bold text-primary-foreground" href={install} onClick={fn() { sheet.set(false) }}>{i18n.tr("nav.install")}</a>
+              <a class={sheet_install} href={install} onClick={fn() { sheet.set(false) }}>{i18n.tr("nav.install")}</a>
             </nav>
             <button data-slot="sheet-close" data-variant="ghost" data-size="icon-sm" class={btn("close")} type="button" onClick={fn() { sheet.set(false) }}>
               {icons.icon("x", "")}
-              <span class="sr-only">Close</span>
+              <span class={sr_only}>Close</span>
             </button>
           </div>
         </>
@@ -489,21 +545,28 @@ fn Header() -> *ui.Node {
   )
 }
 
+let footer = style.def("footer", "border-t")
+let footer_row = style.def("footer-row", "mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6 px-4 py-10 sm:px-6")
+let footer_brand = style.def("footer-brand", "flex items-center gap-3")
+let footer_nav = style.def("footer-nav", "flex flex-wrap items-center gap-x-6 gap-y-2")
+let footer_link = style.def("footer-link", "rounded-md py-1 text-[15px] text-muted-foreground transition-colors hover:text-foreground")
+let footer_note = style.def("footer-note", "text-[15px] text-muted-foreground")
+
 fn Footer() -> *ui.Node {
-  link := "rounded-md py-1 text-[15px] text-muted-foreground transition-colors hover:text-foreground"
+  link := footer_link
   return (
-    <footer class="border-t">
-      <div class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6 px-4 py-10 sm:px-6">
-        <div class="flex items-center gap-3">
-          {themed_icon(32, "", "")}
-          {wordmark("text-xl")}
+    <footer class={footer}>
+      <div class={footer_row}>
+        <div class={footer_brand}>
+          {themed_icon(32, "")}
+          {wordmark(wordmark_small)}
         </div>
-        <nav aria-label={i18n.tr("ui.footer")} class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <nav aria-label={i18n.tr("ui.footer")} class={footer_nav}>
           <a class={link} href={i18n.lp("/spec")}>{i18n.tr("nav.spec")}</a>
           <a class={link} href={i18n.lp("/brand")}>{i18n.tr("nav.brand")}</a>
           <a href={i18n.site("repo")} class={link}>{i18n.tr("ui.source")}</a>
           <a href={i18n.site("releases")} class={link}>{i18n.tr("ui.releases")}</a>
-          <span class="text-[15px] text-muted-foreground">{i18n.tr("ui.license")}</span>
+          <span class={footer_note}>{i18n.tr("ui.license")}</span>
         </nav>
       </div>
     </footer>
@@ -514,13 +577,16 @@ export struct LayoutProps {
   children: []*ui.Node
 }
 
-# the skip link, the header, the page and the footer (inside <body class="flex min-h-dvh flex-col">)
+let skip_link = style.def("skip-link", "sr-only z-50 rounded-md bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3")
+let main_style = style.def("main", "flex-1")
+
+# the skip link, the header, the page and the footer (the body is a flex column: theme.caju)
 export fn Layout(p: LayoutProps) -> *ui.Node {
   return (
     <>
-      <a href="#content" class="sr-only z-50 rounded-md bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3">{i18n.tr("ui.skip")}</a>
+      <a href="#content" class={skip_link}>{i18n.tr("ui.skip")}</a>
       <Header />
-      <main id="content" class="flex-1">{p.children}</main>
+      <main id="content" class={main_style}>{p.children}</main>
       <Footer />
     </>
   )

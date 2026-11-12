@@ -4,26 +4,69 @@ import "std/strings"
 import "./i18n"
 import "./core"
 import "./icons"
+import "./highlight"
+import style "../caju-style/style"
+
+let swatch_style = style.def("swatch", "flex min-h-36 flex-col justify-end gap-1 rounded-2xl p-5")
+let swatch_tall = style.def("swatch-tall", "@swatch min-h-52")
+# the light colors get an edge
+let swatch_edged = style.def("swatch-edged", "@swatch shadow-[inset_0_0_0_1px_#E2D6C6]")
+let swatch_tall_edged = style.def("swatch-tall-edged", "@swatch-tall shadow-[inset_0_0_0_1px_#E2D6C6]")
+let swatch_name = style.def("swatch-name", "text-[17px] font-bold")
+let swatch_name_tall = style.def("swatch-name-tall", "text-[22px] font-bold")
+let swatch_hex = style.def("swatch-hex", "flex items-center gap-1 font-mono text-[13px]")
+let swatch_use = style.def("swatch-use", "text-[13px]")
+let lockup_horizontal = style.def("lockup-horizontal", "flex items-center gap-4 sm:gap-[22px]")
+let lockup_horizontal_icon = style.def("lockup-horizontal-icon", "@caju-icon sm:size-[110px]")
+let lockup_vertical = style.def("lockup-vertical", "flex flex-col items-center gap-5")
+let lockup_compact = style.def("lockup-compact", "flex items-center gap-[9px]")
+let lockup_word = style.def("lockup-word", "font-bold tracking-[-0.035em]")
+let word_horizontal = style.def("lockup-word-horizontal", "@lockup-word text-[56px] sm:text-[92px]")
+let word_vertical = style.def("lockup-word-vertical", "@lockup-word text-[52px] sm:text-[64px]")
+let word_compact = style.def("lockup-word-compact", "@lockup-word text-[37px]")
+let variant_card = style.def("icon-variant", "flex flex-col items-center gap-4 rounded-[20px] px-4 pt-8 pb-4 text-center")
+let variant_caption = style.def("icon-variant-caption", "flex flex-col gap-0.5")
+let variant_label = style.def("icon-variant-label", "text-[15px] font-bold")
+let variant_use = style.def("icon-variant-use", "text-[13px] opacity-80")
+let lockup_row = style.def("lockup-row", "flex flex-col gap-4")
+let lockup_label = style.def("lockup-label", "text-sm font-medium")
+let lockup_panel = style.def("lockup-panel", "flex min-w-0 flex-col gap-6 overflow-x-auto p-8 sm:p-14")
+let size_item = style.def("icon-size", "flex flex-col items-center gap-2")
+let size_label = style.def("icon-size-label", "font-mono text-xs")
+let sizes_panel = style.def("icon-sizes", "flex flex-wrap items-end gap-6 rounded-[20px] p-8")
+let band_alt = style.def("brand-band-alt", "bg-surface")
+let main_colors = style.def("main-colors", "grid grid-cols-2 gap-4 lg:grid-cols-4")
+let support_colors = style.def("support-colors", "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6")
+let variants_grid = style.def("icon-variants", "grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5")
+let lockups_grid = style.def("lockups", "grid grid-cols-1 overflow-hidden rounded-[20px] lg:grid-cols-2")
+let sizes_grid = style.def("icon-sizes-grid", "grid grid-cols-1 gap-4 lg:grid-cols-2")
+let type_grid = style.def("type-samples", "grid grid-cols-1 gap-4 md:grid-cols-2")
+let type_sans = style.def("type-sans", "flex flex-col gap-3 rounded-[20px] bg-card p-8 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let type_label = style.def("type-label", "text-sm text-muted-foreground")
+let type_sans_sample = style.def("type-sans-sample", "text-5xl font-bold tracking-[-0.04em]")
+let type_sans_body = style.def("type-sans-body", "text-lg leading-relaxed text-muted-foreground")
+let type_mono = style.def("type-mono", "flex flex-col gap-3 rounded-[20px] bg-code p-8 text-code-text")
+let type_mono_label = style.def("type-mono-label", "text-sm text-code-dim")
+let type_mono_sample = style.def("type-mono-sample", "font-mono text-2xl")
+let type_mono_command = style.def("type-mono-command", "font-mono text-sm text-code-dim")
 
 fn b(path: str) -> str { return i18n.tr("brand." + path) }
 
 fn swatch(hex: str, light: bool, tall: bool) -> *ui.Node {
   c := i18n.tv("brand.colors").field(hex)
-  cls := "flex flex-col justify-end gap-1 rounded-2xl p-5"
-  if tall { cls = cls + " min-h-52" } else { cls = cls + " min-h-36" }
-  if hex == "#FFF4E6" || hex == "#F3E6D3" { cls = cls + " shadow-[inset_0_0_0_1px_#E2D6C6]" }
+  cls := style.pick(tall, swatch_tall, swatch_style)
+  if hex == "#FFF4E6" || hex == "#F3E6D3" { cls = style.pick(tall, swatch_tall_edged, swatch_edged) }
   fg := "#1E1712"
   if light { fg = "#FFF4E6" }
-  name_cls := "font-bold text-[17px]"
-  if tall { name_cls = "font-bold text-[22px]" }
+  name_cls := style.pick(tall, swatch_name_tall, swatch_name)
   return (
     <div class={cls} style={"background:" + hex + ";color:" + fg}>
       <div class={name_cls}>{c.get_str("name", "")}</div>
-      <div class="flex items-center gap-1 font-mono text-[13px]">
+      <div class={swatch_hex}>
         {hex}
         <core.CopyButton text={hex} label={i18n.tr("ui.copy") + " " + hex} cls={core.btn("copy-swatch")} />
       </div>
-      <div class="text-[13px]">{c.get_str("use", "")}</div>
+      <div class={swatch_use}>{c.get_str("use", "")}</div>
     </div>
   )
 }
@@ -38,16 +81,16 @@ fn lockup(dark: bool, layout: str) -> *ui.Node {
     accent = "#F0603A"
   }
   # ("leading-none" is in the original source, but tailwind-merge drops it before the text-[size])
-  word := fn(size: str) -> *ui.Node {
-    return <div class={"font-bold tracking-[-0.035em] " + size} style={"color:" + text}>caju<span style={"color:" + accent}>lang</span></div>
+  word := fn(cls: str) -> *ui.Node {
+    return <div class={cls} style={"color:" + text}>caju<span style={"color:" + accent}>lang</span></div>
   }
   if layout == "horizontal" {
-    return <div class="flex items-center gap-4 sm:gap-[22px]">{core.caju_icon(icon, 88, "sm:size-[110px]", "")}{word("text-[56px] sm:text-[92px]")}</div>
+    return <div class={lockup_horizontal}>{core.caju_icon(icon, 88, lockup_horizontal_icon, "")}{word(word_horizontal)}</div>
   }
   if layout == "vertical" {
-    return <div class="flex flex-col items-center gap-5">{core.caju_icon(icon, 120, "", "")}{word("text-[52px] sm:text-[64px]")}</div>
+    return <div class={lockup_vertical}>{core.caju_icon(icon, 120, "", "")}{word(word_vertical)}</div>
   }
-  return <div class="flex items-center gap-[9px]">{core.caju_icon(icon, 44, "", "")}{word("text-[37px]")}</div>
+  return <div class={lockup_compact}>{core.caju_icon(icon, 44, "", "")}{word(word_compact)}</div>
 }
 
 fn st(id: str, text: str) -> *ui.Node { return <span id={id}>{text}</span> }
@@ -70,11 +113,11 @@ export fn Brand() -> *ui.Node {
     if bg == "#14100D" { fg = "#FFF4E6" }
     label := info.get_str("label", "")
     variants = append(variants, (
-      <figure class="flex flex-col items-center gap-4 rounded-[20px] px-4 pt-8 pb-4 text-center" style={"background:" + bg + ";color:" + fg}>
+      <figure class={variant_card} style={"background:" + bg + ";color:" + fg}>
         {core.caju_icon(v, 120, "", strings.replace_all(b("variantAlt"), "{label}", label))}
-        <figcaption class="flex flex-col gap-0.5">
-          <span class="text-[15px] font-bold">{label}</span>
-          <span class="text-[13px] opacity-80">{info.get_str("use", "")}</span>
+        <figcaption class={variant_caption}>
+          <span class={variant_label}>{label}</span>
+          <span class={variant_use}>{info.get_str("use", "")}</span>
         </figcaption>
         <a href={"/brand/caju-icon-" + v + ".svg"} download="" data-slot="button" data-variant="ghost" data-size="sm" class={core.btn("download")}>{icons.icon("download", "")} SVG</a>
       </figure>
@@ -91,13 +134,13 @@ export fn Brand() -> *ui.Node {
     rows := []*ui.Node{}
     for _, l := range []str{"horizontal", "vertical", "compact"} {
       rows = append(rows, (
-        <div class="flex flex-col gap-4">
-          <div class="text-sm font-medium">{b("layouts." + l)}</div>
+        <div class={lockup_row}>
+          <div class={lockup_label}>{b("layouts." + l)}</div>
           {lockup(dark, l)}
         </div>
       ))
     }
-    lockups = append(lockups, <div class="flex min-w-0 flex-col gap-6 overflow-x-auto p-8 sm:p-14" style={"background:" + bg + ";color:" + fg}>{rows}</div>)
+    lockups = append(lockups, <div class={lockup_panel} style={"background:" + bg + ";color:" + fg}>{rows}</div>)
   }
   sizes := []*ui.Node{}
   for _, v := range []str{"principal", "invertido"} {
@@ -110,60 +153,60 @@ export fn Brand() -> *ui.Node {
     icons_row := []*ui.Node{}
     for _, s := range []int{128, 64, 48, 32, 24, 16} {
       icons_row = append(icons_row, (
-        <div class="flex flex-col items-center gap-2">
+        <div class={size_item}>
           {core.caju_icon(v, s, "", "")}
-          <div class="font-mono text-xs">{s}px</div>
+          <div class={size_label}>{s}px</div>
         </div>
       ))
     }
-    sizes = append(sizes, <div class="flex flex-wrap items-end gap-6 rounded-[20px] p-8" style={"background:" + bg + ";color:" + fg}>{icons_row}</div>)
+    sizes = append(sizes, <div class={sizes_panel} style={"background:" + bg + ";color:" + fg}>{icons_row}</div>)
   }
   return (
     <>
       <core.PageHero crumb={i18n.tr("nav.brand")} title={b("title")} lead={ui.text(b("lead"))} />
 
       <section aria-labelledby="palette">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={st("palette", b("paletteTitle"))} lead={ui.text(b("paletteLead"))} />
-          <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">{main}</div>
-          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">{support}</div>
+          <div class={main_colors}>{main}</div>
+          <div class={support_colors}>{support}</div>
         </core.Container>
       </section>
 
-      <section aria-labelledby="variants" class="bg-surface">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+      <section aria-labelledby="variants" class={band_alt}>
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={st("variants", b("variantsTitle"))} lead={ui.text(b("variantsLead"))} />
-          <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">{variants}</div>
+          <div class={variants_grid}>{variants}</div>
         </core.Container>
       </section>
 
       <section aria-labelledby="lockups">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={st("lockups", b("signaturesTitle"))} lead={ui.text(b("signaturesLead"))} />
-          <div class="grid grid-cols-1 overflow-hidden rounded-[20px] lg:grid-cols-2">{lockups}</div>
+          <div class={lockups_grid}>{lockups}</div>
         </core.Container>
       </section>
 
-      <section aria-labelledby="sizes" class="bg-surface">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+      <section aria-labelledby="sizes" class={band_alt}>
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={st("sizes", b("sizesTitle"))} lead={ui.text(b("sizesLead"))} />
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">{sizes}</div>
+          <div class={sizes_grid}>{sizes}</div>
         </core.Container>
       </section>
 
       <section aria-labelledby="type">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={st("type", b("typeTitle"))} lead={nil} />
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="flex flex-col gap-3 rounded-[20px] bg-card p-8 shadow-[inset_0_0_0_1px_var(--color-border)]">
-              <div class="text-sm text-muted-foreground">{b("typeSans")}</div>
-              <div class="text-5xl font-bold tracking-[-0.04em]">{b("typeSansSample")}</div>
-              <p class="text-lg leading-relaxed text-muted-foreground">{b("typeSansBody")}</p>
+          <div class={type_grid}>
+            <div class={type_sans}>
+              <div class={type_label}>{b("typeSans")}</div>
+              <div class={type_sans_sample}>{b("typeSansSample")}</div>
+              <p class={type_sans_body}>{b("typeSansBody")}</p>
             </div>
-            <div class="flex flex-col gap-3 rounded-[20px] bg-code p-8 text-code-text">
-              <div class="text-sm text-code-dim">{b("typeMono")}</div>
-              <div class="font-mono text-2xl"><span class="text-tok-kw">fn</span> <span class="text-tok-fn">main</span>()</div>
-              <div class="font-mono text-sm text-code-dim">$ caju build -o app main.caju</div>
+            <div class={type_mono}>
+              <div class={type_mono_label}>{b("typeMono")}</div>
+              <div class={type_mono_sample}><span class={highlight.token_class("kw")}>fn</span> <span class={highlight.token_class("fn")}>main</span>()</div>
+              <div class={type_mono_command}>$ caju build -o app main.caju</div>
             </div>
           </div>
         </core.Container>

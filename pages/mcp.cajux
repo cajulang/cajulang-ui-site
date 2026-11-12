@@ -5,6 +5,94 @@ import "std/strings"
 import "./i18n"
 import "./core"
 import "./icons"
+import "./highlight"
+import style "../caju-style/style"
+
+let metric_bar_row = style.def("metric-bar-row", "grid grid-cols-[3rem_minmax(0,1fr)_4.5rem] items-center gap-2")
+let metric_mode = style.def("metric-mode", "font-mono text-xs font-bold uppercase")
+let metric_track = style.def("metric-track", "h-3 rounded-full bg-muted")
+let metric_fill = style.def("metric-fill", "h-3 rounded-full bg-bar-other")
+let metric_fill_mcp = style.def("metric-fill-mcp", "@metric-fill bg-primary")
+let metric_value = style.def("metric-value", "text-right font-mono text-sm")
+let panel = style.def("panel", "flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let metric_head = style.def("metric-head", "flex items-baseline justify-between gap-2")
+let metric_name = style.def("metric-name", "text-sm font-medium text-muted-foreground")
+let metric_ratio = style.def("metric-ratio", "font-mono text-sm font-bold text-primary")
+let role_icon_style = style.def("role-icon", "mt-0.5 size-5 shrink-0 text-primary")
+let role_icon_tool = style.def("role-icon-tool", "@role-icon text-tok-kw")
+let demo_step = style.def("demo-step", "flex-1")
+let demo_bar = style.def("demo-bar", "h-1.5 w-full rounded-full bg-border transition-colors")
+let demo_bar_done = style.def("demo-bar-done", "@demo-bar bg-primary")
+# a message of the session; the ones before the current step are a little faded
+let message = style.def("message", "flex gap-3 rounded-2xl p-4 transition-opacity data-[past]:opacity-90")
+let message_assistant = style.def("message-assistant", "@message bg-card shadow-[inset_0_0_0_1px_var(--color-border)]")
+let message_user = style.def("message-user", "@message bg-accent")
+let message_tool = style.def("message-tool", "@message bg-code text-code-text")
+let message_main = style.def("message-main", "flex min-w-0 flex-1 flex-col gap-2")
+let message_head = style.def("message-head", "text-xs font-medium text-muted-foreground")
+let message_head_tool = style.def("message-head-tool", "text-xs font-medium text-code-dim")
+let message_title = style.def("message-title", "ml-2 font-mono text-foreground")
+let message_title_tool = style.def("message-title-tool", "ml-2 font-mono text-tok-fn")
+let message_code = style.def("message-code", "overflow-x-auto font-mono text-[13px] leading-relaxed break-words whitespace-pre-wrap")
+let message_code_boxed = style.def("message-code-boxed", "@message-code rounded-lg bg-code p-3 text-code-text")
+let message_text = style.def("message-text", "text-[15px] leading-relaxed whitespace-pre-wrap")
+let demo = style.def("demo", "flex flex-col gap-4")
+let demo_steps = style.def("demo-steps", "flex gap-1.5")
+let demo_messages = style.def("demo-messages", "flex flex-col gap-3")
+let demo_controls = style.def("demo-controls", "flex items-center gap-3")
+let demo_counter = style.def("demo-counter", "text-sm text-muted-foreground")
+let tool_tab = style.def("tool-tab", "flex flex-col gap-1 rounded-2xl bg-card p-4 text-left shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:shadow-[inset_0_0_0_1px_var(--color-primary)]")
+let tool_tab_on = style.def("tool-tab-selected", "flex flex-col gap-1 rounded-2xl bg-foreground p-4 text-left text-background transition-colors")
+let tool_name = style.def("tool-name", "font-mono font-bold text-primary")
+let tool_name_on = style.def("tool-name-selected", "font-mono font-bold text-[#F0603A]")
+let json_pane = style.def("json-pane", "overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]")
+let json_bar = style.def("json-bar", "bg-code-bar px-4 py-2 font-mono text-xs text-code-dim")
+let json_body = style.def("json-body", "overflow-x-auto px-4 py-3 font-mono text-[13px] leading-relaxed")
+let explorer = style.def("tool-explorer", "grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]")
+let tool_list = style.def("tool-list", "flex flex-col gap-2")
+let tool_detail = style.def("tool-detail", "flex min-w-0 flex-col gap-4")
+let tool_desc = style.def("tool-description", "text-base leading-[1.75] text-foreground/85")
+let bench_head = style.def("mcp-bench-head", "h-10 px-4 py-3 text-left align-middle font-bold whitespace-nowrap text-muted-foreground")
+let bench_head_number = style.def("mcp-bench-head-number", "@mcp-bench-head text-right")
+let bench_value = style.def("mcp-bench-value", "px-4 py-3 text-right align-middle font-mono whitespace-nowrap")
+let bench_value_mcp = style.def("mcp-bench-value-mcp", "@mcp-bench-value font-bold text-primary")
+let bench_row = style.def("mcp-bench-row", "border-b transition-colors hover:bg-muted/40")
+let bench_row_first = style.def("mcp-bench-row-first", "@mcp-bench-row border-t-2")
+let bench_mode = style.def("mcp-bench-mode", "mr-2 text-xs font-normal text-muted-foreground uppercase")
+let bench_task = style.def("mcp-bench-task", "flex flex-col gap-0.5")
+let bench_task_title = style.def("mcp-bench-task-title", "font-bold")
+let bench_task_desc = style.def("mcp-bench-task-desc", "text-xs text-muted-foreground")
+let bench_task_cell = style.def("mcp-bench-task-cell", "px-4 py-3 align-top whitespace-normal")
+let bench_card = style.def("mcp-bench-card", "@card rounded-[20px] p-2")
+let bench_scroll = style.def("mcp-bench-scroll", "relative w-full overflow-x-auto")
+let bench_tbl = style.def("mcp-bench-table", "w-full min-w-[640px] caption-bottom text-sm")
+let bench_head_row = style.def("mcp-bench-head-row", "border-b transition-colors")
+let bench_body = style.def("mcp-bench-body", "[&_tr:last-child]:border-0")
+let mode_total = style.def("mode-total", "flex items-baseline gap-2 rounded-2xl bg-card px-5 py-3 shadow-[inset_0_0_0_1px_var(--color-border)]")
+let mode_total_mcp = style.def("mode-total-mcp", "flex items-baseline gap-2 rounded-2xl bg-primary px-5 py-3 text-primary-foreground")
+let mode_name = style.def("mode-name", "font-mono text-sm font-bold uppercase")
+let mode_score = style.def("mode-score", "text-3xl font-bold")
+let mode_unit = style.def("mode-unit", "text-sm opacity-80")
+let finding_title = style.def("finding-title", "font-bold")
+let finding_text = style.def("finding-text", "text-[15px] leading-relaxed text-muted-foreground")
+let command_box = style.def("command-box", "flex items-start gap-2 rounded-[10px] bg-code py-2 pr-2 pl-4 text-code-text")
+let hero_command = style.def("mcp-hero-command", "@command-box max-w-[640px]")
+let command_text = style.def("command-text", "flex-1 py-1 font-mono text-sm break-all")
+let command_json = style.def("command-json", "flex-1 overflow-x-auto py-1 font-mono text-sm")
+let band_alt = style.def("mcp-band-alt", "bg-surface")
+let mode_totals = style.def("mode-totals", "flex flex-wrap items-center gap-3")
+let metric_grid = style.def("metric-grid", "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5")
+let finding_grid = style.def("finding-grid", "grid grid-cols-1 gap-3 md:grid-cols-2")
+let note = style.def("mcp-note", "text-[13px] leading-relaxed text-muted-foreground")
+let note_link = style.def("mcp-note-link", "underline underline-offset-2 hover:text-foreground")
+let setup_grid = style.def("setup-grid", "@page-width grid grid-cols-1 gap-8 py-16 sm:py-20 lg:grid-cols-2")
+let setup_column = style.def("setup-column", "flex flex-col gap-5")
+let setup_item = style.def("setup-item", "flex flex-col gap-2")
+let setup_label = style.def("setup-label", "text-sm font-bold")
+let setup_note = style.def("setup-note", "text-sm leading-relaxed text-muted-foreground")
+let why = style.def("why", "flex flex-col justify-center gap-3 rounded-[20px] bg-inverse p-8 text-inverse-foreground")
+let why_title = style.def("why-title", "text-[26px] font-bold tracking-[-0.02em]")
+let why_text = style.def("why-text", "leading-[1.75] text-inverse-muted")
 
 fn fnum(v: num) -> str { return i18n.fmt_num(v, 0, 1) }
 fn money(v: num) -> str { return i18n.fmt_num(v, 3, 3) }
@@ -28,21 +116,20 @@ fn compare(label: str, metric: str) -> *ui.Node {
     v := all.get_float(mode + "." + metric, 0.0)
     w := 100.0 * v / top
     if w < 3.0 { w = 3.0 }
-    fill := "h-3 rounded-full bg-bar-other"
-    if mode == "mcp" { fill = "h-3 rounded-full bg-primary" }
+    fill := style.pick(mode == "mcp", metric_fill_mcp, metric_fill)
     rows = append(rows, (
-      <div class="grid grid-cols-[3rem_minmax(0,1fr)_4.5rem] items-center gap-2">
-        <span class="font-mono text-xs font-bold uppercase">{mode}</span>
-        <div class="h-3 rounded-full bg-muted" aria-hidden="true"><div class={fill} style={"width:" + str(w) + "%"}></div></div>
-        <span class="text-right font-mono text-sm">{fmt(metric, v)}</span>
+      <div class={metric_bar_row}>
+        <span class={metric_mode}>{mode}</span>
+        <div class={metric_track} aria-hidden="true"><div class={fill} style={"width:" + str(w) + "%"}></div></div>
+        <span class={metric_value}>{fmt(metric, v)}</span>
       </div>
     ))
   }
   return (
-    <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
-      <div class="flex items-baseline justify-between gap-2">
-        <span class="text-sm font-medium text-muted-foreground">{label}</span>
-        <span class="font-mono text-sm font-bold text-primary">{fnum(ratio)}×</span>
+    <div class={panel}>
+      <div class={metric_head}>
+        <span class={metric_name}>{label}</span>
+        <span class={metric_ratio}>{fnum(ratio)}×</span>
       </div>
       {rows}
     </div>
@@ -50,8 +137,8 @@ fn compare(label: str, metric: str) -> *ui.Node {
 }
 
 fn role_icon(role: str) -> *ui.Node {
-  cls := "mt-0.5 size-5 shrink-0 text-primary"
-  if role == "tool" { return icons.icon("wrench", "mt-0.5 size-5 shrink-0 text-tok-kw") }
+  cls := role_icon_style
+  if role == "tool" { return icons.icon("wrench", role_icon_tool) }
   if role == "assistant" { return icons.icon("bot", cls) }
   return icons.icon("user", cls)
 }
@@ -64,8 +151,8 @@ fn AiDemo() -> *ui.Node {
   for k := 0; k < len(steps); k++ {
     kk := k
     bars = append(bars, (
-      <li class="flex-1">
-        <button tabindex="-1" onClick={fn() { i.set(kk) }} class={ui.cx(map[str]bool{"h-1.5 w-full rounded-full transition-colors": true, "bg-primary": k <= i.v, "bg-border": k > i.v})}></button>
+      <li class={demo_step}>
+        <button tabindex="-1" onClick={fn() { i.set(kk) }} class={style.pick(k <= i.v, demo_bar_done, demo_bar)}></button>
       </li>
     ))
   }
@@ -77,24 +164,19 @@ fn AiDemo() -> *ui.Node {
     lang := s.get_str("lang", "")
     body := s.get_str("body", "")
     tool := role == "tool"
-    box := "bg-card shadow-[inset_0_0_0_1px_var(--color-border)]"
-    if tool { box = "bg-code text-code-text" }
-    if role == "user" { box = "bg-accent" }
-    cls := "flex gap-3 rounded-2xl p-4 transition-opacity " + box
-    if k < i.v { cls = cls + " opacity-90" }
-    head_cls := "text-xs font-medium text-muted-foreground"
-    title_cls := "ml-2 font-mono text-foreground"
-    if tool {
-      head_cls = "text-xs font-medium text-code-dim"
-      title_cls = "ml-2 font-mono text-tok-fn"
-    }
-    pre_cls := "overflow-x-auto font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words"
-    if !tool { pre_cls = pre_cls + " rounded-lg bg-code p-3 text-code-text" }
-    content := ui.either(lang != "" && lang != "text", <pre class={pre_cls}>{body}</pre>, <p class="text-[15px] leading-relaxed whitespace-pre-wrap">{body}</p>)
+    cls := message_assistant
+    if tool { cls = message_tool }
+    if role == "user" { cls = message_user }
+    let past: any = nil
+    if k < i.v { past = "" }
+    head_cls := style.pick(tool, message_head_tool, message_head)
+    title_cls := style.pick(tool, message_title_tool, message_title)
+    pre_cls := style.pick(tool, message_code, message_code_boxed)
+    content := ui.either(lang != "" && lang != "text", <pre class={pre_cls}>{body}</pre>, <p class={message_text}>{body}</p>)
     shown = append(shown, (
-      <div class={cls}>
+      <div class={cls} data-past={past}>
         {role_icon(role)}
-        <div class="flex min-w-0 flex-1 flex-col gap-2">
+        <div class={message_main}>
           <div class={head_cls}>
             {i18n.tr("ai.demoRoles." + role)}
             {ui.when(title != "", <span class={title_cls}>{title}</span>)}
@@ -106,17 +188,17 @@ fn AiDemo() -> *ui.Node {
   }
   step := strings.replace_all(strings.replace_all(i18n.tr("ai.demoStep"), "{n}", str(i.v + 1)), "{total}", str(len(steps)))
   return (
-    <div class="flex flex-col gap-4">
-      <ol class="flex gap-1.5" aria-hidden="true">{bars}</ol>
-      <div class="flex flex-col gap-3" aria-live="polite">{shown}</div>
-      <div class="flex items-center gap-3">
+    <div class={demo}>
+      <ol class={demo_steps} aria-hidden="true">{bars}</ol>
+      <div class={demo_messages} aria-live="polite">{shown}</div>
+      <div class={demo_controls}>
         <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("outline-10")} disabled={i.v == 0} onClick={fn() { if i.v > 0 { i.set(i.v - 1) } }}>
           {icons.icon("chevron-left", "")} {i18n.tr("ai.demoPrev")}
         </button>
         <button data-slot="button" data-variant="default" data-size="default" class={core.btn("primary-10")} disabled={i.v == len(steps) - 1} onClick={fn() { if i.v < len(steps) - 1 { i.set(i.v + 1) } }}>
           {i18n.tr("ai.demoNext")} {icons.icon("chevron-right", "")}
         </button>
-        <span class="text-sm text-muted-foreground">{step}</span>
+        <span class={demo_counter}>{step}</span>
       </div>
     </div>
   )
@@ -131,12 +213,8 @@ fn ToolExplorer() -> *ui.Node {
     name := x.get_str("name", "")
     on := name == sel.v
     if on { desc = x.get_str("desc", "") }
-    cls := "flex flex-col gap-1 rounded-2xl p-4 text-left transition-colors bg-card shadow-[inset_0_0_0_1px_var(--color-border)] hover:shadow-[inset_0_0_0_1px_var(--color-primary)]"
-    name_cls := "font-mono font-bold text-primary"
-    if on {
-      cls = "flex flex-col gap-1 rounded-2xl p-4 text-left transition-colors bg-foreground text-background"
-      name_cls = "font-mono font-bold text-[#F0603A]"
-    }
+    cls := style.pick(on, tool_tab_on, tool_tab)
+    name_cls := style.pick(on, tool_name_on, tool_name)
     tabs = append(tabs, (
       <button role="tab" aria-selected={core.bs(on)} onClick={fn() { sel.set(name) }} class={cls}>
         <span class={name_cls}>{name}</span>
@@ -148,17 +226,17 @@ fn ToolExplorer() -> *ui.Node {
   for _, kind := range []str{"request", "response"} {
     label := i18n.tr("ai." + kind)
     panes = append(panes, (
-      <div class="overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
-        <div class="bg-code-bar px-4 py-2 font-mono text-xs text-code-dim">{label} · {sel.v}</div>
-        <pre class="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-relaxed">{ex.get_str(kind, "")}</pre>
+      <div class={json_pane}>
+        <div class={json_bar}>{label} · {sel.v}</div>
+        <pre class={json_body}>{ex.get_str(kind, "")}</pre>
       </div>
     ))
   }
   return (
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
-      <div role="tablist" aria-orientation="vertical" class="flex flex-col gap-2">{tabs}</div>
-      <div class="flex min-w-0 flex-col gap-4">
-        <p class="text-base leading-[1.75] text-foreground/85">{i18n.rich(desc)}</p>
+    <div class={explorer}>
+      <div role="tablist" aria-orientation="vertical" class={tool_list}>{tabs}</div>
+      <div class={tool_detail}>
+        <p class={tool_desc}>{i18n.rich(desc)}</p>
         {panes}
       </div>
     </div>
@@ -166,11 +244,6 @@ fn ToolExplorer() -> *ui.Node {
 }
 
 fn span_id(id: str, text: str) -> *ui.Node { return <span id={id}>{text}</span> }
-
-const TH_L = "h-10 text-left align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3 font-bold text-muted-foreground"
-const TH_R = "h-10 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3 text-right font-bold text-muted-foreground"
-const TD_V = "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3 text-right font-mono"
-const ROW = "border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-muted/40"
 
 fn bench_table() -> *ui.Node {
   runs := i18n.C.get_int("mcp.benchRuns", 0)
@@ -186,45 +259,43 @@ fn bench_table() -> *ui.Node {
       vals := []str{str(m.get_int("ok", 0)) + "/" + str(runs), fnum(m.get_float("turns", 0.0)), fnum(m.get_float("compiler", 0.0)), fnum(m.get_float("seconds", 0.0))}
       cells := []*ui.Node{}
       for vi, v := range vals {
-        cls := TD_V
-        if mode == "mcp" { cls = cls + " font-bold text-primary" }
+        cls := style.pick(mode == "mcp", bench_value_mcp, bench_value)
         cells = append(cells, (
           <td data-slot="table-cell" class={cls}>
-            {ui.when(vi == 0, <span class="mr-2 text-xs font-normal text-muted-foreground uppercase">{mode}</span>)}
+            {ui.when(vi == 0, <span class={bench_mode}>{mode}</span>)}
             {v}
           </td>
         ))
       }
       first := ui.when(k == 0, (
-        <div class="flex flex-col gap-0.5">
-          <span class="font-bold">{task.get_str("title", "")}</span>
-          <span class="text-xs text-muted-foreground">{task.get_str("desc", "")}</span>
+        <div class={bench_task}>
+          <span class={bench_task_title}>{task.get_str("title", "")}</span>
+          <span class={bench_task_desc}>{task.get_str("desc", "")}</span>
         </div>
       ))
-      row_cls := ROW
-      if k == 0 { row_cls = ROW + " border-t-2" }
+      row_cls := style.pick(k == 0, bench_row_first, bench_row)
       rows = append(rows, (
         <tr data-slot="table-row" class={row_cls}>
-          <td data-slot="table-cell" class="p-2 [&:has([role=checkbox])]:pr-0 px-4 py-3 align-top whitespace-normal">{first}</td>
+          <td data-slot="table-cell" class={bench_task_cell}>{first}</td>
           {cells}
         </tr>
       ))
     }
   }
   return (
-    <div data-slot="card" data-size="default" class={core.card_class_gap("rounded-[20px] p-2 ring-border")}>
-      <div data-slot="table-container" class="relative w-full overflow-x-auto">
-        <table data-slot="table" class="w-full caption-bottom text-sm min-w-[640px]">
-          <thead data-slot="table-header" class="[&_tr]:border-b">
-            <tr data-slot="table-row" class="transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted border-b-2 hover:bg-transparent">
-              <th data-slot="table-head" class={TH_L}>{i18n.tr("ai.benchCols.task")}</th>
-              <th data-slot="table-head" class={TH_R}>{i18n.tr("ai.metrics.ok")}</th>
-              <th data-slot="table-head" class={TH_R}>{i18n.tr("ai.metrics.turns")}</th>
-              <th data-slot="table-head" class={TH_R}>{i18n.tr("ai.metrics.compiler")}</th>
-              <th data-slot="table-head" class={TH_R}>{i18n.tr("ai.metrics.seconds")}</th>
+    <div data-slot="card" data-size="default" class={bench_card}>
+      <div data-slot="table-container" class={bench_scroll}>
+        <table data-slot="table" class={bench_tbl}>
+          <thead data-slot="table-header">
+            <tr data-slot="table-row" class={bench_head_row}>
+              <th data-slot="table-head" class={bench_head}>{i18n.tr("ai.benchCols.task")}</th>
+              <th data-slot="table-head" class={bench_head_number}>{i18n.tr("ai.metrics.ok")}</th>
+              <th data-slot="table-head" class={bench_head_number}>{i18n.tr("ai.metrics.turns")}</th>
+              <th data-slot="table-head" class={bench_head_number}>{i18n.tr("ai.metrics.compiler")}</th>
+              <th data-slot="table-head" class={bench_head_number}>{i18n.tr("ai.metrics.seconds")}</th>
             </tr>
           </thead>
-          <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">{rows}</tbody>
+          <tbody data-slot="table-body" class={bench_body}>{rows}</tbody>
         </table>
       </div>
     </div>
@@ -238,13 +309,12 @@ export fn Mcp() -> *ui.Node {
   total := len(i18n.C.get_array("mcp.bench")) * runs
   modes := []*ui.Node{}
   for _, mode := range []str{"cli", "mcp"} {
-    cls := "flex items-baseline gap-2 rounded-2xl px-5 py-3 bg-card shadow-[inset_0_0_0_1px_var(--color-border)]"
-    if mode == "mcp" { cls = "flex items-baseline gap-2 rounded-2xl px-5 py-3 bg-primary text-primary-foreground" }
+    cls := style.pick(mode == "mcp", mode_total_mcp, mode_total)
     modes = append(modes, (
       <div class={cls}>
-        <span class="font-mono text-sm font-bold uppercase">{mode}</span>
-        <span class="text-3xl font-bold">{i18n.C.get_int("mcp.benchAll." + mode + ".ok", 0)}/{total}</span>
-        <span class="text-sm opacity-80">{i18n.tr("ai.metrics.ok")}</span>
+        <span class={mode_name}>{mode}</span>
+        <span class={mode_score}>{i18n.C.get_int("mcp.benchAll." + mode + ".ok", 0)}/{total}</span>
+        <span class={mode_unit}>{i18n.tr("ai.metrics.ok")}</span>
       </div>
     ))
   }
@@ -255,71 +325,71 @@ export fn Mcp() -> *ui.Node {
   findings := []*ui.Node{}
   for _, f := range i18n.tv("ai.findings").items {
     findings = append(findings, (
-      <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
-        <h3 class="font-bold">{f.get_str("title", "")}</h3>
-        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(f.get_str("desc", ""))}</p>
+      <div class={panel}>
+        <h3 class={finding_title}>{f.get_str("title", "")}</h3>
+        <p class={finding_text}>{i18n.rich(f.get_str("desc", ""))}</p>
       </div>
     ))
   }
   return (
     <>
       <core.PageHero crumb={i18n.tr("nav.ai")} title={i18n.tr("ai.title")} lead={ui.text(i18n.tr("ai.lead"))}>
-        <div class="flex max-w-[640px] items-start gap-2 rounded-[10px] bg-code py-2 pr-2 pl-4 text-code-text">
-          <code class="flex-1 py-1 font-mono text-sm break-all"><span class="text-tok-kw">$ </span>{setup}</code>
+        <div class={hero_command}>
+          <code class={command_text}><span class={highlight.token_class("kw")}>$ </span>{setup}</code>
           <core.CopyButton text={setup} label={i18n.tr("ui.copy")} cls={core.btn("copy-code")} />
         </div>
       </core.PageHero>
 
-      <section aria-labelledby="bench-h" class="bg-surface">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+      <section aria-labelledby="bench-h" class={band_alt}>
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={span_id("bench-h", i18n.tr("ai.benchTitle"))} lead={ui.frag(i18n.rt("ai.benchLead"))} />
-          <div class="flex flex-wrap items-center gap-3">{modes}</div>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">{metrics}</div>
+          <div class={mode_totals}>{modes}</div>
+          <div class={metric_grid}>{metrics}</div>
           {bench_table()}
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">{findings}</div>
-          <p class="text-[13px] leading-relaxed text-muted-foreground">
-            {i18n.rt("ai.benchNote")}{" "}<a href={i18n.C.get_str("mcp.benchUrl", "")} class="underline underline-offset-2 hover:text-foreground">bench/mcp/RESULTS.md</a>
+          <div class={finding_grid}>{findings}</div>
+          <p class={note}>
+            {i18n.rt("ai.benchNote")}{" "}<a href={i18n.C.get_str("mcp.benchUrl", "")} class={note_link}>bench/mcp/RESULTS.md</a>
           </p>
         </core.Container>
       </section>
 
       <section aria-labelledby="demo-h">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={span_id("demo-h", i18n.tr("ai.demoTitle"))} lead={ui.text(i18n.tr("ai.demoLead"))} />
           <AiDemo />
         </core.Container>
       </section>
 
-      <section aria-labelledby="tools-h" class="bg-surface">
-        <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+      <section aria-labelledby="tools-h" class={band_alt}>
+        <core.Container cls={core.SECTION}>
           <core.SectionTitle title={span_id("tools-h", i18n.tr("ai.toolsTitle"))} lead={ui.text(i18n.tr("ai.toolsLead"))} />
           <ToolExplorer />
         </core.Container>
       </section>
 
       <section aria-labelledby="setup-h">
-        <core.Container cls="grid grid-cols-1 gap-8 py-16 sm:py-20 lg:grid-cols-2">
-          <div class="flex flex-col gap-5">
+        <core.Container cls={setup_grid}>
+          <div class={setup_column}>
             <core.SectionTitle title={span_id("setup-h", i18n.tr("ai.setupTitle"))} lead={ui.text(i18n.tr("ai.setupLead"))} />
-            <div class="flex flex-col gap-2">
-              <span class="text-sm font-bold">{i18n.tr("ai.claudeCode")}</span>
-              <div class="flex items-start gap-2 rounded-[10px] bg-code py-2 pr-2 pl-4 text-code-text">
-                <code class="flex-1 py-1 font-mono text-sm break-all">{setup}</code>
+            <div class={setup_item}>
+              <span class={setup_label}>{i18n.tr("ai.claudeCode")}</span>
+              <div class={command_box}>
+                <code class={command_text}>{setup}</code>
                 <core.CopyButton text={setup} label={i18n.tr("ui.copy")} cls={core.btn("copy-code")} />
               </div>
             </div>
-            <div class="flex flex-col gap-2">
-              <span class="text-sm font-bold">{i18n.tr("ai.otherClients")}</span>
-              <div class="flex items-start gap-2 rounded-[10px] bg-code py-2 pr-2 pl-4 text-code-text">
-                <pre class="flex-1 overflow-x-auto py-1 font-mono text-sm">{setup_json}</pre>
+            <div class={setup_item}>
+              <span class={setup_label}>{i18n.tr("ai.otherClients")}</span>
+              <div class={command_box}>
+                <pre class={command_json}>{setup_json}</pre>
                 <core.CopyButton text={setup_json} label={i18n.tr("ui.copy")} cls={core.btn("copy-code")} />
               </div>
             </div>
-            <p class="text-sm leading-relaxed text-muted-foreground">{i18n.rt("ai.setupNote")}</p>
+            <p class={setup_note}>{i18n.rt("ai.setupNote")}</p>
           </div>
-          <div class="flex flex-col justify-center gap-3 rounded-[20px] bg-inverse p-8 text-inverse-foreground">
-            <h2 class="text-[26px] font-bold tracking-[-0.02em]">{i18n.tr("ai.whyTitle")}</h2>
-            <p class="leading-[1.75] text-inverse-muted">{i18n.rt("ai.why")}</p>
+          <div class={why}>
+            <h2 class={why_title}>{i18n.tr("ai.whyTitle")}</h2>
+            <p class={why_text}>{i18n.rt("ai.why")}</p>
           </div>
         </core.Container>
       </section>

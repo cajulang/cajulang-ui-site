@@ -9,6 +9,50 @@ import "./core"
 import "./icons"
 import "./highlight"
 import "./pages/home"
+import style "../caju-style/style"
+
+let spin = style.def("spin", "animate-spin")
+let spin_small = style.def("spin-small", "size-3.5 animate-spin")
+let editor_area = style.def("editor", "relative flex min-h-[420px] flex-1")
+let editor_gutter = style.def("editor-gutter", "w-12 shrink-0 overflow-hidden py-4 pr-2 text-right font-mono text-sm leading-[1.7] text-code-gutter select-none")
+let editor_stack = style.def("editor-stack", "relative min-w-0 flex-1")
+let editor_text = style.def("editor-text", "m-0 px-4 py-4 pl-1 font-mono text-sm leading-[1.7] whitespace-pre")
+let editor_shown = style.def("editor-highlight", "@editor-text pointer-events-none absolute inset-0 overflow-hidden")
+let editor_input = style.def("editor-input", "@editor-text absolute inset-0 h-full w-full resize-none overflow-auto bg-transparent text-transparent caret-[#F0603A] outline-none selection:bg-[#F0603A]/30 focus-visible:ring-2 focus-visible:ring-tok-kw/60")
+let file_tab = style.def("file-tab", "flex h-[34px] shrink-0 items-center border-t-2 border-transparent font-mono text-[13px] text-code-dim hover:text-code-text")
+let file_tab_active = style.def("file-tab-active", "flex h-[34px] shrink-0 items-center border-t-2 border-tok-kw bg-code font-mono text-[13px]")
+let file_tab_button = style.def("file-tab-button", "flex h-full items-center gap-2 pr-2 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-tok-kw/60")
+let file_close = style.def("file-close", "mr-1.5 rounded p-1 text-code-dim hover:bg-white/10 hover:text-code-text")
+let file_close_icon = style.def("file-close-icon", "size-3.5")
+let small_icon = style.def("small-icon", "size-4")
+let add_file_button = style.def("add-file-button", "mb-1 ml-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-code-dim hover:bg-white/10 hover:text-code-text")
+let file_name_input = style.def("file-name-input", "h-8 w-40 rounded-md border border-code-ring bg-code px-2 font-mono text-[13px] text-code-text outline-none focus:border-tok-kw")
+let file_name_input_bad = style.def("file-name-input-bad", "@file-name-input border-[#ff9b85] focus:border-[#ff9b85]")
+let file_name_form = style.def("file-name-form", "mb-1 ml-1 flex shrink-0 items-center gap-1")
+let file_name_ok = style.def("file-name-ok", "rounded-md p-1.5 text-code-dim hover:bg-white/10 hover:text-code-text")
+let output_dim = style.def("output-dim", "text-code-dim")
+let output_error = style.def("output-error", "text-[#ff9b85]")
+let playground = style.def("playground", "flex flex-col gap-4")
+let toolbar = style.def("playground-toolbar", "flex flex-wrap items-center gap-3")
+let example_label = style.def("example-picker", "flex items-center gap-2 text-sm text-muted-foreground")
+let example_select = style.def("example-select", "h-11 rounded-xl border bg-card px-3 text-[15px] text-foreground")
+let shortcut_hint = style.def("shortcut-hint", "ml-auto hidden text-sm text-muted-foreground sm:inline")
+let panes = style.def("playground-panes", "grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-2")
+let editor_pane = style.def("editor-pane", "flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]")
+let file_tabs = style.def("file-tabs", "flex min-h-10 items-end gap-0.5 overflow-x-auto bg-code-bar pl-3")
+let bad_name = style.def("bad-file-name", "bg-code-bar px-4 pb-2 text-xs text-[#ff9b85]")
+let output_pane = style.def("output-pane", "@editor-pane min-h-[320px]")
+let output_bar = style.def("output-bar", "flex h-10 items-center justify-between bg-code-bar px-4 font-mono text-[13px] text-code-dim")
+let output_status = style.def("output-status", "flex items-center gap-2")
+let output_log = style.def("output-log", "max-h-[70vh] flex-1 overflow-auto px-5 py-4 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap")
+let intro = style.def("playground-intro", "@page-width flex flex-col gap-3 pt-10 pb-6 sm:pt-14")
+let page_title = style.def("playground-title", "text-[40px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[52px]")
+let page_lead = style.def("playground-lead", "max-w-[720px] text-lg leading-relaxed text-muted-foreground")
+let playground_body = style.def("playground-body", "@page-width pb-12")
+let how = style.def("playground-how", "bg-surface")
+let how_body = style.def("playground-how-body", "@page-width flex flex-col gap-3 py-14")
+let how_title = style.def("playground-how-title", "text-[28px] font-bold tracking-[-0.03em]")
+let how_text = style.def("playground-how-text", "max-w-[760px] text-base leading-[1.75] text-foreground/85")
 
 const MAIN = "main.caju"
 const STORE = "caju-playground-files"
@@ -129,14 +173,13 @@ fn Editor(e: EditorProps) -> *ui.Node {
     gutter = append(gutter, <div>{i + 1}</div>)
     shown = append(shown, <div>{highlight.line_nodes(line)}</div>)
   }
-  box := "m-0 px-4 py-4 font-mono text-sm leading-[1.7] whitespace-pre"
   return (
-    <div class="relative flex min-h-[420px] flex-1">
-      <div aria-hidden="true" class="w-12 shrink-0 overflow-hidden py-4 pr-2 text-right font-mono text-sm leading-[1.7] text-code-gutter select-none">{gutter}</div>
-      <div class="relative min-w-0 flex-1">
-        <pre aria-hidden="true" class={box + " pointer-events-none absolute inset-0 overflow-hidden pl-1"}><code>{shown}</code></pre>
+    <div class={editor_area}>
+      <div aria-hidden="true" class={editor_gutter}>{gutter}</div>
+      <div class={editor_stack}>
+        <pre aria-hidden="true" class={editor_shown}><code>{shown}</code></pre>
         <textarea data-editor="" aria-label={e.label} spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off"
-          class={box + " absolute inset-0 h-full w-full resize-none overflow-auto bg-transparent pl-1 text-transparent caret-[#F0603A] outline-none selection:bg-[#F0603A]/30 focus-visible:ring-2 focus-visible:ring-tok-kw/60"}
+          class={editor_input}
           value={e.value} onInput={fn(ev: *ui.Event) { e.onChange(ev.value) }} onCajurun={fn() { e.onRun() }}></textarea>
       </div>
     </div>
@@ -318,7 +361,7 @@ fn Playground() -> *ui.Node {
     icon := icons.icon("play", "")
     label := p("run")
     if status.v == "loading" {
-      icon = spinner("animate-spin")
+      icon = spinner(spin)
       label = p("loading")
     }
     run_button = <button data-slot="button" data-variant="default" data-size="default" class={core.btn("run")} disabled={status.v != "ready"} onClick={run}>{icon}{label}</button>
@@ -331,54 +374,52 @@ fn Playground() -> *ui.Node {
   for _, f := range F {
     name := f.name
     on := name == cur.name
-    cls := "flex h-[34px] shrink-0 items-center border-t-2 font-mono text-[13px] border-transparent text-code-dim hover:text-code-text"
-    if on { cls = "flex h-[34px] shrink-0 items-center border-t-2 font-mono text-[13px] border-tok-kw bg-code" }
+    cls := style.pick(on, file_tab_active, file_tab)
     rm := strings.replace_all(p("removeFile"), "{name}", name)
     tabs = append(tabs, (
       <div class={cls}>
-        <button role="tab" aria-selected={core.bs(on)} onClick={fn() { active.set(name) }} class="flex h-full items-center gap-2 pr-2 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-tok-kw/60">
+        <button role="tab" aria-selected={core.bs(on)} onClick={fn() { active.set(name) }} class={file_tab_button}>
           {ui.when(name == MAIN, core.caju_icon("principal", 16, "", ""))}
           {name}
         </button>
         {ui.when(name != MAIN, (
-          <button onClick={fn() { remove_file(name) }} aria-label={rm} title={rm} class="mr-1.5 rounded p-1 text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("x", "size-3.5")}</button>
+          <button onClick={fn() { remove_file(name) }} aria-label={rm} title={rm} class={file_close}>{icons.icon("x", file_close_icon)}</button>
         ))}
       </div>
     ))
   }
   if !adding.v {
     tabs = append(tabs, (
-      <button onClick={fn() { adding.set(true) }} aria-label={p("addFile")} title={p("addFile")} class="mb-1 ml-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("plus", "size-4")}</button>
+      <button onClick={fn() { adding.set(true) }} aria-label={p("addFile")} title={p("addFile")} class={add_file_button}>{icons.icon("plus", small_icon)}</button>
     ))
   } else {
-    input_cls := "h-8 w-40 rounded-md border bg-code px-2 font-mono text-[13px] text-code-text outline-none border-code-ring focus:border-tok-kw"
-    if bad { input_cls = "h-8 w-40 rounded-md border bg-code px-2 font-mono text-[13px] text-code-text outline-none border-[#ff9b85]" }
+    input_cls := style.pick(bad, file_name_input_bad, file_name_input)
     title := p("newFileName")
     if bad { title = p("badName") }
     tabs = append(tabs, (
-      <form class="mb-1 ml-1 flex shrink-0 items-center gap-1" onSubmit={add_file}>
+      <form class={file_name_form} onSubmit={add_file}>
         <input autofocus="" value={draft.v} onInput={fn(e: *ui.Event) { draft.set(e.value) }}
           onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { adding.set(false) } }}
           onBlur={fn() { if strings.trim_space(draft.v) == "" { adding.set(false) } }}
           aria-label={p("newFileName")} aria-invalid={core.bs(bad)} title={title} placeholder="util.caju" spellcheck="false" class={input_cls} />
-        <button type="submit" aria-label={p("addFile")} class="rounded-md p-1.5 text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("check", "size-4")}</button>
+        <button type="submit" aria-label={p("addFile")} class={file_name_ok}>{icons.icon("check", small_icon)}</button>
       </form>
     ))
   }
 
   status_text := ui.empty()
-  if status.v == "compiling" { status_text = ui.frag([]*ui.Node{spinner("size-3.5 animate-spin"), ui.text(" " + p("compiling"))}) }
-  if status.v == "running" { status_text = ui.frag([]*ui.Node{spinner("size-3.5 animate-spin"), ui.text(" " + p("running"))}) }
+  if status.v == "compiling" { status_text = ui.frag([]*ui.Node{spinner(spin_small), ui.text(" " + p("compiling"))}) }
+  if status.v == "running" { status_text = ui.frag([]*ui.Node{spinner(spin_small), ui.text(" " + p("running"))}) }
   if !busy { status_text = ui.text(stats.v) }
   out := []*ui.Node{}
   ls := lines.v.([]Line)
   if len(ls) == 0 && !busy {
-    out = append(out, <span class="text-code-dim">{p("empty")}</span>)
+    out = append(out, <span class={output_dim}>{p("empty")}</span>)
   } else {
     for _, l := range ls {
       let cls: any = nil
-      if l.kind == "err" { cls = "text-[#ff9b85]" }
-      if l.kind == "info" { cls = "text-code-dim" }
+      if l.kind == "err" { cls = output_error }
+      if l.kind == "info" { cls = output_dim }
       out = append(out, <span class={cls}>{l.text}</span>)
     }
   }
@@ -389,12 +430,12 @@ fn Playground() -> *ui.Node {
     copy_label = p("linkCopied")
   }
   return (
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-wrap items-center gap-3">
+    <div class={playground}>
+      <div class={toolbar}>
         {run_button}
-        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+        <label class={example_label}>
           {p("example")}
-          <select class="h-11 rounded-xl border bg-card px-3 text-[15px] text-foreground" onChange={fn(e: *ui.Event) { pick(e.value) }}>{options}</select>
+          <select class={example_select} onChange={fn(e: *ui.Event) { pick(e.value) }}>{options}</select>
         </label>
         <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("share")} aria-live="polite" onClick={share}>{copy_icon} {copy_label}</button>
         <button data-slot="button" data-variant="ghost" data-size="default" class={core.btn("reset")} title={p("reset")} aria-label={p("reset")}
@@ -403,20 +444,20 @@ fn Playground() -> *ui.Node {
             if id == "" { id = exs[0].id }
             pick(id)
           }}>{icons.icon("rotate-ccw", "")}</button>
-        <span class="ml-auto hidden text-sm text-muted-foreground sm:inline">{p("shortcut")}</span>
+        <span class={shortcut_hint}>{p("shortcut")}</span>
       </div>
-      <div class="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-2">
-        <section aria-label={p("editor")} class="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
-          <div role="tablist" aria-label={p("files")} class="flex min-h-10 items-end gap-0.5 overflow-x-auto bg-code-bar pl-3">{tabs}</div>
-          {ui.when(bad, <div class="bg-code-bar px-4 pb-2 text-xs text-[#ff9b85]">{p("badName")}</div>)}
+      <div class={panes}>
+        <section aria-label={p("editor")} class={editor_pane}>
+          <div role="tablist" aria-label={p("files")} class={file_tabs}>{tabs}</div>
+          {ui.when(bad, <div class={bad_name}>{p("badName")}</div>)}
           {ui.keyed(cur.name, <Editor value={cur.code} label={p("editor") + ": " + cur.name} onChange={set_code} onRun={run} />)}
         </section>
-        <section aria-label={p("output")} class="flex min-h-[320px] min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
-          <div class="flex h-10 items-center justify-between bg-code-bar px-4 font-mono text-[13px] text-code-dim">
+        <section aria-label={p("output")} class={output_pane}>
+          <div class={output_bar}>
             <span>{p("output")}</span>
-            <span aria-live="polite" class="flex items-center gap-2">{status_text}</span>
+            <span aria-live="polite" class={output_status}>{status_text}</span>
           </div>
-          <div role="log" data-autoscroll="" class="max-h-[70vh] flex-1 overflow-auto px-5 py-4 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">{out}</div>
+          <div role="log" data-autoscroll="" class={output_log}>{out}</div>
         </section>
       </div>
     </div>
@@ -426,15 +467,15 @@ fn Playground() -> *ui.Node {
 export fn PlaygroundPage() -> *ui.Node {
   return (
     <>
-      <core.Container cls="flex flex-col gap-3 pt-10 pb-6 sm:pt-14">
-        <h1 class="text-[40px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[52px]">{p("title")}</h1>
-        <p class="max-w-[720px] text-lg leading-relaxed text-muted-foreground">{p("lead")}</p>
+      <core.Container cls={intro}>
+        <h1 class={page_title}>{p("title")}</h1>
+        <p class={page_lead}>{p("lead")}</p>
       </core.Container>
-      <core.Container cls="pb-12"><Playground /></core.Container>
-      <section class="bg-surface">
-        <core.Container cls="flex flex-col gap-3 py-14">
-          <h2 class="text-[28px] font-bold tracking-[-0.03em]">{p("howTitle")}</h2>
-          <p class="max-w-[760px] text-base leading-[1.75] text-foreground/85">{i18n.rt("playground.how")}</p>
+      <core.Container cls={playground_body}><Playground /></core.Container>
+      <section class={how}>
+        <core.Container cls={how_body}>
+          <h2 class={how_title}>{p("howTitle")}</h2>
+          <p class={how_text}>{i18n.rt("playground.how")}</p>
         </core.Container>
       </section>
     </>

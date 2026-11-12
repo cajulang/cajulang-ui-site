@@ -1,0 +1,15 @@
+# Writes public/site.css: the theme and every style.def of the site, compiled by caju style.
+#   caju run site_css.caju      (tools/build.sh)
+import style "../caju-style/style"
+import css "../caju-style/css"
+import "std/fs"
+import "std/os"
+import "./theme"
+import "./app"
+
+theme.setup()
+fonts, _ := fs.read_file("styles/fonts.css")
+style.raw(fonts)
+reg := style.registry()
+for _, w := range css.unknown(reg) { os.eprintln("caju style: unknown utility in " + w) }
+fs.write_file("public/site.css", css.minify(css.compile(reg)), 420)

@@ -1,5 +1,6 @@
 # A small Caju syntax highlighter (the original site's lib/highlight.ts, rule by rule): enough for
 # the snippets on the site, not a full lexer.
+import style "../caju-style/style"
 import ui "../caju-ui/ui"
 import "std/strings"
 
@@ -166,17 +167,17 @@ export fn line_tokens(line: str) -> []Token {
   return out
 }
 
-export fn token_class(kind: str) -> str {
-  switch kind {
-  case "kw": return "text-tok-kw"
-  case "fn": return "text-tok-fn"
-  case "type": return "text-tok-type"
-  case "str": return "text-tok-str"
-  case "num": return "text-tok-num"
-  case "comment": return "text-tok-comment italic"
-  }
-  return ""
+# the class of each kind of token
+let TOKENS = map[str]str{
+  "kw": style.def("token-keyword", "text-tok-kw"),
+  "fn": style.def("token-function", "text-tok-fn"),
+  "type": style.def("token-type", "text-tok-type"),
+  "str": style.def("token-string", "text-tok-str"),
+  "num": style.def("token-number", "text-tok-num"),
+  "comment": style.def("token-comment", "text-tok-comment italic"),
 }
+
+export fn token_class(kind: str) -> str { return TOKENS[kind] }
 
 # the highlighted pieces of one line (" " for an empty line, as the original renders it)
 export fn line_nodes(line: str) -> []*ui.Node {

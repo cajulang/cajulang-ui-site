@@ -12,3 +12,5 @@ pages/*.caju
 !highlight.caju
 !icons.caju
 public/caju/
+!theme.caju
+!site_css.caju

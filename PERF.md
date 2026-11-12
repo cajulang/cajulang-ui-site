@@ -87,6 +87,22 @@
 | Latency p99 | 144.4 ms | 32.2 ms |
 | Server memory (RSS) | 209 MB | 48 MB |
 
+## Styles: caju style vs Tailwind CSS (this site, before and after)
+
+The same pixels, measured on the seven English pages (HTML as served, CSS once; gzip -9):
+
+| | Tailwind CSS 4 | caju style |
+|---|---|---|
+| HTML, 7 pages | 761 KB (108 KB gzip) | 527 KB (90 KB gzip) |
+| site.css | 65 KB (11.9 KB gzip) | 164 KB (16.9 KB gzip) |
+| Total, 7 pages + CSS | 119 KB gzip | 107 KB gzip |
+| app.wasm | 1672 KB (190 KB gzip) | 1777 KB (200 KB gzip) |
+
+One readable class per element makes the HTML a third smaller; the CSS grows, since each class
+has its own combination of declarations (Tailwind shares each utility among all the elements),
+even with the rules of the same body merged. The program carries the utility lists of the
+`style.def` calls, about 10 KB gzipped.
+
 ## Notes
 
 - Caju's "Transferred" leaves out `app.wasm` (213 KB gzipped), which the worker fetches and the

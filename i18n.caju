@@ -4,6 +4,7 @@
 import ui "../caju-ui/ui"
 import "std/json"
 import "std/strings"
+import style "../caju-style/style"
 
 export const LOCALES = "en pt es zh"
 
@@ -121,9 +122,11 @@ export fn fmt_ms(ms: int) -> str {
 # ---------------------------------------------------------------------------------------------
 # Rich text: the dictionary's markup, `code`, ``code with a backtick``, **bold** and *em*
 
+let inline_code = style.def("inline-code", "rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9em]")
+
 # inline code inside prose
 export fn code(s: str) -> *ui.Node {
-  return ui.h("code", []ui.Attr{ui.a("class", "rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9em]")}, []*ui.Node{ui.text(s)})
+  return ui.h("code", []ui.Attr{ui.a("class", inline_code)}, []*ui.Node{ui.text(s)})
 }
 
 fn at(s: str, i: int) -> int {

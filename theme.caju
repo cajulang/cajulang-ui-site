@@ -1,0 +1,78 @@
+# The site's theme for caju style: colors, radii, fonts, variants, the base rules and the palette.
+#   theme.setup() before css.compile(style.registry())   (site_css.caju)
+import style "../caju-style/style"
+
+# the palette of the light and dark themes: creme #FFF4E6, grafite #1E1712, caju #C8232F,
+# castanha #8A6B4E, noite #14100D, areia #F3E6D3, pedra #6B5B4E, caju claro #F0603A,
+# caju escuro #9E1424, névoa #B8A99A
+const LIGHT = "background #fff4e6, foreground #1e1712, card #ffffff, card-foreground #1e1712, popover #ffffff, popover-foreground #1e1712, primary #c8232f, primary-foreground #fff4e6, secondary #f3e6d3, secondary-foreground #1e1712, muted #f3e6d3, muted-foreground #6b5b4e, accent #fbe3df, accent-foreground #c8232f, destructive #9e1424, border #e8dccb, input #e8dccb, ring #c8232f, radius 0.75rem, surface #f3e6d3, inverse #14100d, inverse-foreground #fff4e6, inverse-muted #b8a99a, inverse-panel #2a211b, bar-other #d9c9b4, brand-hover #9e1424"
+const DARK = "background #14100d, foreground #fff4e6, card #221b16, card-foreground #fff4e6, popover #221b16, popover-foreground #fff4e6, primary #f0603a, primary-foreground #1e1712, secondary #1c1612, secondary-foreground #fff4e6, muted #1c1612, muted-foreground #b8a99a, accent #3a1a16, accent-foreground #f0603a, destructive #f0603a, border #2e251f, input #2e251f, ring #f0603a, surface #1c1612, inverse #fff4e6, inverse-foreground #1e1712, inverse-muted #6b5b4e, inverse-panel #eadcc9, bar-other #4a3d33, brand-hover #f48a6c"
+
+# the code window is dark in both themes
+const CODE = "code #1a1410, code-bar #120e0b, code-line #2e251f, code-ring #3a2f27, code-text #ede3d7, code-dim #8a7b6e, code-gutter #5a4d42, tok-kw #f0603a, tok-fn #ffd166, tok-type #7fc8e8, tok-str #9bd67a, tok-num #f2b36b, tok-comment #8a7b6e"
+
+const CJK = "\"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Noto Sans CJK SC\", ui-sans-serif, system-ui, sans-serif"
+
+# "name value, name value" -> [[name, value]...]
+fn pairs(s: str) -> [][]str {
+  out := [][]str{}
+  for _, p := range split(s, ", ") {
+    k := 0
+    while int(p[k]) != 32 { k++ }
+    out = append(out, []str{p[0:k], p[k + 1:]})
+  }
+  return out
+}
+
+fn split(s: str, sep: str) -> []str {
+  out := []str{}
+  start := 0
+  for i := 0; i + len(sep) <= len(s); i++ {
+    if s[i:i + len(sep)] == sep {
+      out = append(out, s[start:i])
+      start = i + len(sep)
+    }
+  }
+  return append(out, s[start:])
+}
+
+fn vars(sel: str, list: str) -> str {
+  css := sel + " {\n"
+  for _, p := range pairs(list) { css = css + "  --" + p[0] + ": " + p[1] + ";\n" }
+  return css + "}"
+}
+
+export fn setup() {
+  for _, p := range pairs(LIGHT) {
+    if p[0] != "radius" { style.theme_inline_value("color-" + p[0], "var(--" + p[0] + ")") }
+  }
+  for _, p := range pairs(CODE) { style.theme_inline_value("color-" + p[0], p[1]) }
+  for _, p := range pairs("sm 0.6, md 0.8, xl 1.4, 2xl 1.8, 3xl 2.2, 4xl 2.6") {
+    style.theme_inline_value("radius-" + p[0], "calc(var(--radius) * " + p[1] + ")")
+  }
+  style.theme_inline_value("radius-lg", "var(--radius)")
+  # fonts.css sets --font-space and --font-jetbrains on <html>
+  style.theme("font-sans", "var(--font-space), " + CJK)
+  style.theme("font-heading", "var(--font-space), " + CJK)
+  style.theme("font-mono", "var(--font-jetbrains), ui-monospace, monospace")
+
+  style.custom_variant("dark", "&:is(.dark *)")
+  # the state variants of shadcn/ui
+  for _, p := range pairs("open state, closed state, checked state, unchecked state, disabled true, active state") {
+    first := "&:where([data-state=\"" + p[0] + "\"])"
+    if p[1] == "true" { first = "&:where([data-" + p[0] + "=\"true\"])" }
+    style.custom_variant("data-" + p[0], first + " || &:where([data-" + p[0] + "]:not([data-" + p[0] + "=\"false\"]))")
+  }
+  style.custom_variant("data-selected", "&:where([data-selected=\"true\"])")
+  style.custom_variant("data-horizontal", "&:where([data-orientation=\"horizontal\"])")
+  style.custom_variant("data-vertical", "&:where([data-orientation=\"vertical\"])")
+
+  style.base("*", "border-border outline-ring/50")
+  style.base("html", "antialiased font-sans [scroll-behavior:smooth] [scroll-padding-top:5rem] motion-reduce:[scroll-behavior:auto]")
+  style.base("body", "flex min-h-dvh flex-col bg-background text-foreground")
+  style.base("#app", "contents")
+  style.base("code, pre", "[font-variant-ligatures:none]")
+
+  style.raw(vars(":root", LIGHT))
+  style.raw(vars(".dark", DARK))
+}

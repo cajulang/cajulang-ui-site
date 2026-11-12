@@ -5,6 +5,30 @@ import "std/strings"
 import "./i18n"
 import "./core"
 import "./pages/home"
+import style "../caju-style/style"
+
+let paragraph = style.def("spec-paragraph", "max-w-[72ch] text-base leading-[1.75] text-foreground/85")
+let note = style.def("spec-note", "max-w-[72ch] rounded-xl border-l-[3px] border-primary bg-accent/60 px-5 py-4 text-[15px] leading-relaxed")
+let list = style.def("spec-list", "flex max-w-[72ch] list-disc flex-col gap-2 pl-5 text-base leading-[1.7] marker:text-primary")
+let keywords = style.def("spec-keywords", "flex max-w-[72ch] flex-wrap gap-1.5")
+let table_card = style.def("spec-table-card", "@card gap-0 rounded-2xl p-1.5")
+let table_scroll = style.def("table-scroll", "relative w-full overflow-x-auto")
+let table = style.def("table", "w-full caption-bottom text-sm")
+let table_head_row = style.def("table-head-row", "border-b transition-colors")
+let table_body = style.def("table-body", "[&_tr:last-child]:border-0")
+let table_row = style.def("table-row", "border-b transition-colors hover:bg-muted/40")
+let head_cell = style.def("spec-head-cell", "h-10 px-4 py-3 text-left align-middle font-bold whitespace-nowrap text-muted-foreground")
+let cell = style.def("spec-cell", "px-4 py-3 align-top text-[15px] leading-[1.8] whitespace-normal")
+let toc_link = style.def("spec-toc-link", "flex gap-3 rounded-lg px-2 py-1.5 text-[15px] text-foreground/80 transition-colors hover:bg-muted hover:text-foreground")
+let toc_number = style.def("spec-toc-number", "font-mono text-[13px] leading-6 text-primary")
+let chapter = style.def("spec-chapter", "flex scroll-mt-24 flex-col gap-5 border-b pb-14 last:border-b-0")
+let chapter_title = style.def("spec-chapter-title", "flex items-baseline gap-3 text-[28px] font-bold tracking-[-0.03em] sm:text-[32px]")
+let chapter_number = style.def("spec-chapter-number", "font-mono text-base font-bold text-primary")
+let layout = style.def("spec-layout", "@page-width grid grid-cols-1 gap-12 py-14 lg:grid-cols-[250px_minmax(0,1fr)] lg:py-20")
+let toc_nav = style.def("spec-toc", "lg:sticky lg:top-24 lg:self-start")
+let toc_title = style.def("spec-toc-title", "mb-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase")
+let toc_list = style.def("spec-toc-list", "grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-1")
+let chapters = style.def("spec-chapters", "flex min-w-0 flex-col gap-14")
 
 const KEYWORDS = "let const if else while for to and or not true false import from export fn return extern dllexport struct interface nil switch case default break continue fallthrough defer go select chan map range"
 
@@ -15,20 +39,20 @@ fn num2(i: int) -> str {
 
 fn block(b: *json.Value) -> *ui.Node {
   if b.field("p") != nil {
-    return <p class="max-w-[72ch] text-base leading-[1.75] text-foreground/85">{i18n.rich(b.get_str("p", ""))}</p>
+    return <p class={paragraph}>{i18n.rich(b.get_str("p", ""))}</p>
   }
   if b.field("note") != nil {
-    return <div class="max-w-[72ch] rounded-xl border-l-[3px] border-primary bg-accent/60 px-5 py-4 text-[15px] leading-relaxed">{i18n.rich(b.get_str("note", ""))}</div>
+    return <div class={note}>{i18n.rich(b.get_str("note", ""))}</div>
   }
   if b.field("list") != nil {
     items := []*ui.Node{}
     for _, x := range b.get_array("list") { items = append(items, <li>{i18n.rich(x.s)}</li>) }
-    return <ul class="flex max-w-[72ch] list-disc flex-col gap-2 pl-5 text-base leading-[1.7] marker:text-primary">{items}</ul>
+    return <ul class={list}>{items}</ul>
   }
   if b.field("keywords") != nil {
     words := []*ui.Node{}
     for _, k := range strings.split(KEYWORDS, " ") { words = append(words, i18n.code(k)) }
-    return <div class="flex max-w-[72ch] flex-wrap gap-1.5">{words}</div>
+    return <div class={keywords}>{words}</div>
   }
   if b.field("snippet") != nil {
     s := i18n.C.get("examples.specSnippets").field(b.get_str("snippet", ""))
@@ -36,24 +60,24 @@ fn block(b: *json.Value) -> *ui.Node {
   }
   heads := []*ui.Node{}
   for _, h := range b.get_array("table.head") {
-    heads = append(heads, <th data-slot="table-head" class="h-10 text-left align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3 font-bold text-muted-foreground">{h.s}</th>)
+    heads = append(heads, <th data-slot="table-head" class={head_cell}>{h.s}</th>)
   }
   rows := []*ui.Node{}
   for _, r := range b.get_array("table.rows") {
     cells := []*ui.Node{}
     for _, c := range r.items {
-      cells = append(cells, <td data-slot="table-cell" class="p-2 [&:has([role=checkbox])]:pr-0 px-4 py-3 align-top text-[15px] leading-[1.8] whitespace-normal">{i18n.rich(c.s)}</td>)
+      cells = append(cells, <td data-slot="table-cell" class={cell}>{i18n.rich(c.s)}</td>)
     }
-    rows = append(rows, <tr data-slot="table-row" class="border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-muted/40">{cells}</tr>)
+    rows = append(rows, <tr data-slot="table-row" class={table_row}>{cells}</tr>)
   }
   return (
-    <div data-slot="card" data-size="default" class={core.card_class("gap-0 rounded-2xl p-1.5 py-1.5 ring-border")}>
-      <div data-slot="table-container" class="relative w-full overflow-x-auto">
-        <table data-slot="table" class="w-full caption-bottom text-sm">
-          <thead data-slot="table-header" class="[&_tr]:border-b">
-            <tr data-slot="table-row" class="border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-transparent">{heads}</tr>
+    <div data-slot="card" data-size="default" class={table_card}>
+      <div data-slot="table-container" class={table_scroll}>
+        <table data-slot="table" class={table}>
+          <thead data-slot="table-header">
+            <tr data-slot="table-row" class={table_head_row}>{heads}</tr>
           </thead>
-          <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">{rows}</tbody>
+          <tbody data-slot="table-body" class={table_body}>{rows}</tbody>
         </table>
       </div>
     </div>
@@ -69,8 +93,8 @@ export fn Spec() -> *ui.Node {
     title := sec.get_str("title", "")
     toc = append(toc, (
       <li>
-        <a href={"#" + id} class="flex gap-3 rounded-lg px-2 py-1.5 text-[15px] text-foreground/80 transition-colors hover:bg-muted hover:text-foreground">
-          <span class="font-mono text-[13px] leading-6 text-primary">{num2(i)}</span>
+        <a href={"#" + id} class={toc_link}>
+          <span class={toc_number}>{num2(i)}</span>
           {title}
         </a>
       </li>
@@ -78,9 +102,9 @@ export fn Spec() -> *ui.Node {
     blocks := []*ui.Node{}
     for _, b := range sec.get_array("blocks") { blocks = append(blocks, block(b)) }
     body = append(body, (
-      <section id={id} aria-labelledby={id + "-h"} class="flex scroll-mt-24 flex-col gap-5 border-b pb-14 last:border-b-0">
-        <h2 id={id + "-h"} class="flex items-baseline gap-3 text-[28px] font-bold tracking-[-0.03em] sm:text-[32px]">
-          <span class="font-mono text-base font-bold text-primary">{num2(i)}</span>
+      <section id={id} aria-labelledby={id + "-h"} class={chapter}>
+        <h2 id={id + "-h"} class={chapter_title}>
+          <span class={chapter_number}>{num2(i)}</span>
           {title}
         </h2>
         {blocks}
@@ -91,12 +115,12 @@ export fn Spec() -> *ui.Node {
   return (
     <>
       <core.PageHero crumb={i18n.tr("nav.spec")} title={i18n.tr("spec.title")} lead={ui.text(lead)} />
-      <core.Container cls="grid grid-cols-1 gap-12 py-14 lg:grid-cols-[250px_minmax(0,1fr)] lg:py-20">
-        <nav aria-label={i18n.tr("spec.sectionsLabel")} class="lg:sticky lg:top-24 lg:self-start">
-          <div class="mb-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">{i18n.tr("spec.onThisPage")}</div>
-          <ol class="grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-1">{toc}</ol>
+      <core.Container cls={layout}>
+        <nav aria-label={i18n.tr("spec.sectionsLabel")} class={toc_nav}>
+          <div class={toc_title}>{i18n.tr("spec.onThisPage")}</div>
+          <ol class={toc_list}>{toc}</ol>
         </nav>
-        <div class="flex min-w-0 flex-col gap-14">{body}</div>
+        <div class={chapters}>{body}</div>
       </core.Container>
     </>
   )
