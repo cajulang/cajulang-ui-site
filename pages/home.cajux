@@ -1,0 +1,361 @@
+# The home page.
+import ui "../caju-ui/ui"
+import "std/json"
+import "./i18n"
+import "./core"
+
+const HELLO = "fn greet(name: str) -> str {\n  return \"Hello, \" + name + \"!\"\n}\n\nprint(greet(\"world\"))"
+const BADGE = "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden border border-transparent whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3! [a]:hover:bg-primary/80 h-auto self-start rounded-full bg-accent px-3.5 py-2 font-mono text-[13px] font-normal text-accent-foreground"
+
+const TH = "h-10 text-left align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3.5 font-bold text-muted-foreground"
+const TH_R = "h-10 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3.5 text-right font-bold text-muted-foreground"
+const TH_ROW = "text-left align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 h-auto px-4 py-3.5 text-base font-bold text-foreground"
+const TD = "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3.5 text-right font-mono text-[15px]"
+
+# the example with this file name, in the content
+export fn example(file: str) -> *json.Value {
+  for _, g := range i18n.C.get_array("examples.exampleGroups") {
+    for _, e := range g.get_array("examples") {
+      if e.get_str("file", "") == file { return e }
+    }
+  }
+  return nil
+}
+
+export fn strs(v: *json.Value) -> []str {
+  out := []str{}
+  if v == nil { return out }
+  for _, x := range v.items { out = append(out, x.s) }
+  return out
+}
+
+fn Hero() -> *ui.Node {
+  install := i18n.site("install")
+  stats := []*ui.Node{}
+  for _, s := range i18n.tv("home.stats").items {
+    stats = append(stats, (
+      <div class="flex flex-col gap-1 border-l-[3px] border-primary px-6 py-5">
+        <div class="text-[26px] font-bold tracking-[-0.02em]">{s.get_str("value", "")}</div>
+        <div class="text-sm text-muted-foreground">{s.get_str("label", "")}</div>
+      </div>
+    ))
+  }
+  return (
+    <section class="relative overflow-hidden">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary opacity-[0.16] [mask-image:radial-gradient(ellipse_55%_75%_at_100%_35%,black_25%,transparent_75%)]">
+        {core.cashew_pattern("hero-pattern", "", "")}
+      </div>
+      <core.Container cls="grid items-center gap-14 pt-16 pb-14 sm:pt-[88px] sm:pb-16 lg:grid-cols-2">
+        <div class="flex min-w-0 flex-col gap-[26px]">
+          <span data-slot="badge" data-variant="default" class={BADGE}>v{i18n.site("version")} · {i18n.tr("home.badgeSuffix")}</span>
+          <h1 class="text-[44px] leading-[1.06] font-bold tracking-[-0.04em] sm:text-[62px]">{i18n.tr("home.title.0")}<br />{i18n.tr("home.title.1")}</h1>
+          <p class="max-w-[540px] text-lg leading-relaxed text-muted-foreground sm:text-xl">{i18n.tr("home.lead")}</p>
+          <div class="flex flex-wrap gap-3.5">
+            <a class={core.BIG_PRIMARY} href="#install">{i18n.tr("home.install")}</a>
+            <a class={core.BIG_OUTLINE} href={i18n.lp("/examples")}>{i18n.tr("home.seeExamples")}</a>
+          </div>
+          <div class="flex items-start gap-2 rounded-[10px] bg-muted py-2 pr-2 pl-4">
+            <code class="flex-1 py-1 font-mono text-[13px] break-all whitespace-pre-wrap text-muted-foreground">{install}</code>
+            <core.CopyButton text={install} label={i18n.tr("ui.copyInstall")} cls={core.btn("copy-page")} />
+          </div>
+        </div>
+        <core.CodeWindow file="hello.caju" code={HELLO} output={[]str{"$ caju run hello.caju", "Hello, world!"}} flat={false} />
+      </core.Container>
+      <core.Container cls="grid grid-cols-1 gap-4 pb-[72px] sm:grid-cols-2 lg:grid-cols-4">{stats}</core.Container>
+    </section>
+  )
+}
+
+fn Features() -> *ui.Node {
+  cards := []*ui.Node{}
+  for _, f := range i18n.tv("home.features").items {
+    cards = append(cards, (
+      <div data-slot="card" data-size="default" class={core.card_class("gap-3 rounded-[20px] p-7 ring-border")}>
+        <div aria-hidden="true" class="size-2.5 rounded-full bg-primary"></div>
+        <div data-slot="card-title" class="font-heading group-data-[size=sm]/card:text-sm text-xl font-bold"><h3>{f.get_str("title", "")}</h3></div>
+        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(f.get_str("body", ""))}</p>
+      </div>
+    ))
+  }
+  return (
+    <section id="features" class="relative overflow-hidden bg-surface">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(30,23,18,0.13)_1.3px,transparent_1.4px)] bg-[length:22px_22px] [mask-image:radial-gradient(circle_at_100%_0%,black_0%,transparent_40%)] dark:bg-[radial-gradient(rgba(255,244,230,0.09)_1.3px,transparent_1.4px)]"></div>
+      <core.Container cls="flex flex-col gap-11 py-20 sm:py-24">
+        <core.SectionTitle title={ui.text(i18n.tr("home.featuresTitle"))} lead={ui.text(i18n.tr("home.featuresLead"))} />
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards}</div>
+      </core.Container>
+    </section>
+  )
+}
+
+fn Code() -> *ui.Node {
+  items := []*ui.Node{}
+  for _, file := range []str{"divide.caju", "shapes.caju"} {
+    e := example(file)
+    info := i18n.tv("examples.items").field(file)
+    items = append(items, (
+      <div class="flex min-w-0 flex-col gap-4">
+        <div class="flex flex-col gap-1.5">
+          <h3 class="text-[22px] font-bold">{info.get_str("title", "")}</h3>
+          <p class="text-[15px] leading-relaxed text-muted-foreground">{info.get_str("description", "")}</p>
+        </div>
+        <core.CodeWindow file={file} code={e.get_str("code", "")} output={strs(e.get("output"))} flat={true} />
+      </div>
+    ))
+  }
+  return (
+    <section id="code">
+      <core.Container cls="flex flex-col gap-16 py-20 sm:py-24">
+        <core.SectionTitle title={ui.text(i18n.tr("home.codeTitle"))} lead={ui.text(i18n.tr("home.codeLead"))} />
+        <div class="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">{items}</div>
+        <div><a class={core.BIG_OUTLINE} href={i18n.lp("/examples")}>{i18n.tr("home.allExamples")}</a></div>
+      </core.Container>
+    </section>
+  )
+}
+
+fn pct(v: num) -> str {
+  if v < 2.0 { v = 2.0 }
+  return "width:" + str(v) + "%"
+}
+
+fn HttpBench() -> *ui.Node {
+  cards := []*ui.Node{}
+  for _, sc := range i18n.C.get_array("bench.httpBench") {
+    routes := sc.get_array("routes")
+    top := 0
+    for _, r := range routes {
+      if r.get_int("caju", 0) > top { top = r.get_int("caju", 0) }
+    }
+    rows := []*ui.Node{}
+    for _, r := range routes {
+      caju := r.get_int("caju", 0)
+      other := r.get_int("gin", 0)
+      if r.get_int("nethttp", 0) > other { other = r.get_int("nethttp", 0) }
+      bars := []*ui.Node{}
+      for _, srv := range []str{"caju", "gin", "nethttp"} {
+        label := map[str]str{"caju": "Caju + web", "gin": "Gin", "nethttp": "Go net/http"}[srv]
+        v := r.get_int(srv, 0)
+        is := srv == "caju"
+        bars = append(bars, (
+          <div class="grid grid-cols-[6.5rem_minmax(0,1fr)_4.5rem] items-center gap-2">
+            <span class={ui.cx(map[str]bool{"text-xs": true, "font-bold": is, "text-muted-foreground": !is})}>{label}</span>
+            <div class="h-2.5 rounded-full bg-muted" aria-hidden="true">
+              <div class={ui.cx(map[str]bool{"h-2.5 rounded-full": true, "bg-primary": is, "bg-bar-other": !is})} style={pct(100.0 * num(v) / num(top))}></div>
+            </div>
+            <span class={ui.cx(map[str]bool{"text-right font-mono text-sm": true, "font-bold text-primary": is})}>{i18n.fmt_int(v)}</span>
+          </div>
+        ))
+      }
+      rows = append(rows, (
+        <div class="flex flex-col gap-2">
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="font-mono text-sm font-bold">{r.get_str("route", "")}</span>
+            <span class="font-mono text-sm font-bold text-primary">{i18n.fmt_num(num(caju) / num(other), 0, 1)}×</span>
+          </div>
+          {bars}
+        </div>
+      ))
+    }
+    cards = append(cards, (
+      <div data-slot="card" data-size="default" class={core.card_class("gap-6 rounded-[20px] p-6 ring-border")}>
+        <div class="flex items-baseline justify-between gap-3">
+          <h4 class="font-bold">{i18n.tr("home.httpScenarios." + sc.get_str("scenario", ""))}</h4>
+          <span class="font-mono text-xs text-muted-foreground">{i18n.tr("home.httpUnit")}</span>
+        </div>
+        {rows}
+      </div>
+    ))
+  }
+  return (
+    <div class="flex flex-col gap-6">
+      <div class="flex max-w-[760px] flex-col gap-2">
+        <h3 class="text-2xl font-bold tracking-[-0.02em]">{i18n.tr("home.httpTitle")}</h3>
+        <p class="text-base leading-[1.75] text-muted-foreground">{i18n.rt("home.httpLead")}</p>
+      </div>
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">{cards}</div>
+      <p class="text-[13px] leading-relaxed text-muted-foreground">
+        {i18n.rt("home.httpNote")}{" "}<a href={i18n.site("web")} class="font-medium underline underline-offset-2 hover:text-foreground">{i18n.tr("home.httpRepo")}</a>{" · "}<a href={i18n.C.get_str("bench.httpResults", "")} class="underline underline-offset-2 hover:text-foreground">{i18n.tr("home.httpResults")}</a>
+      </p>
+    </div>
+  )
+}
+
+fn Performance() -> *ui.Node {
+  rows := []*ui.Node{}
+  for _, b := range i18n.C.get_array("bench.benchmarks") {
+    rows = append(rows, (
+      <tr data-slot="table-row" class="border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-muted/50">
+        <th data-slot="table-head" class={TH_ROW} scope="row">{b.get_str("name", "")} <span class="font-mono text-[13px] font-normal text-muted-foreground">n={b.get_str("n", "")}</span></th>
+        <td data-slot="table-cell" class={TD + " font-bold text-primary"}>{i18n.fmt_ms(b.get_int("caju", 0))}</td>
+        <td data-slot="table-cell" class={TD}>{i18n.fmt_ms(b.get_int("go", 0))}</td>
+        <td data-slot="table-cell" class={TD}>{i18n.fmt_ms(b.get_int("rust", 0))}</td>
+        <td data-slot="table-cell" class={TD}>{i18n.fmt_ms(b.get_int("python", 0))}</td>
+      </tr>
+    ))
+  }
+  heads := []*ui.Node{}
+  for _, l := range []str{"Caju", "Go", "Rust", "Python"} {
+    heads = append(heads, <th data-slot="table-head" class={TH_R}>{l}</th>)
+  }
+  top := 0
+  for _, s := range i18n.C.get_array("bench.binarySizes") {
+    if s.get_int("kb", 0) > top { top = s.get_int("kb", 0) }
+  }
+  sizes := []*ui.Node{}
+  for _, s := range i18n.C.get_array("bench.binarySizes") {
+    lang := s.get_str("lang", "")
+    kb := s.get_int("kb", 0)
+    fill := "h-3.5 rounded-full bg-bar-other"
+    if lang == "Caju" { fill = "h-3.5 rounded-full bg-primary" }
+    sizes = append(sizes, (
+      <div class="flex flex-col gap-1.5">
+        <div class="flex justify-between text-[15px]">
+          <span class="font-bold">{lang}</span>
+          <span class="font-mono text-muted-foreground">{i18n.fmt_int(kb)} KB</span>
+        </div>
+        <div class="h-3.5 rounded-full bg-muted" aria-hidden="true"><div class={fill} style={pct(100.0 * num(kb) / num(top))}></div></div>
+      </div>
+    ))
+  }
+  return (
+    <section id="performance" class="bg-surface">
+      <core.Container cls="flex flex-col gap-10 py-20 sm:py-24">
+        <core.SectionTitle title={ui.text(i18n.tr("home.perfTitle"))} lead={ui.text(i18n.tr("home.perfLead"))} />
+        <div class="flex flex-wrap items-start gap-6">
+          <div data-slot="card" data-size="default" class={core.card_class_gap("min-w-0 flex-[2_1_560px] rounded-[20px] p-2 ring-border")}>
+            <div data-slot="table-container" class="relative w-full overflow-x-auto">
+              <table data-slot="table" class="w-full caption-bottom text-sm min-w-[480px]">
+                <caption data-slot="table-caption" class="text-muted-foreground mt-0 caption-top px-4 pt-4 pb-2 text-left text-sm">{i18n.tr("home.perfCaption")}</caption>
+                <thead data-slot="table-header" class="[&_tr]:border-b">
+                  <tr data-slot="table-row" class="transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted border-b-2 hover:bg-transparent">
+                    <th data-slot="table-head" class={TH}>{i18n.tr("home.perfChallenge")}</th>
+                    {heads}
+                  </tr>
+                </thead>
+                <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">{rows}</tbody>
+              </table>
+            </div>
+          </div>
+          <div data-slot="card" data-size="default" class={core.card_class("min-w-0 flex-[1_1_300px] gap-5 rounded-[20px] p-7 ring-border")}>
+            <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start rounded-t-xl has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing) gap-1.5 px-0">
+              <div data-slot="card-title" class="font-heading group-data-[size=sm]/card:text-sm text-xl font-bold"><h3>{i18n.tr("home.sizeTitle")}</h3></div>
+              <div data-slot="card-description" class="text-muted-foreground text-sm leading-normal">{i18n.tr("home.sizeLead")}</div>
+            </div>
+            <div data-slot="card-content" class="flex flex-col gap-5 px-0">{sizes}</div>
+          </div>
+        </div>
+        <p class="text-[13px] leading-relaxed text-muted-foreground">
+          {i18n.tr("home.perfNote")}{" "}<a href={i18n.site("benchmarks")} class="underline underline-offset-2 hover:text-foreground">{i18n.tr("home.perfLink")}</a>.
+        </p>
+        <HttpBench />
+      </core.Container>
+    </section>
+  )
+}
+
+fn Packages() -> *ui.Node {
+  steps := []*ui.Node{}
+  for i, s := range i18n.tv("home.pkgSteps").items {
+    steps = append(steps, (
+      <li class="flex items-start gap-4">
+        {core.step_number(i + 1, false)}
+        <div class="flex flex-col gap-1">
+          <div class="text-lg font-bold">{s.get_str("title", "")}</div>
+          <div class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(s.get_str("body", ""))}</div>
+        </div>
+      </li>
+    ))
+  }
+  return (
+    <section id="packages">
+      <core.Container cls="grid items-center gap-14 py-20 sm:py-24 lg:grid-cols-2">
+        <div class="flex flex-col gap-[22px]">
+          <core.SectionTitle title={ui.text(i18n.tr("home.pkgTitle"))} lead={ui.text(i18n.tr("home.pkgLead"))} />
+          <ol class="flex flex-col gap-4">{steps}</ol>
+        </div>
+        {core.terminal([]str{
+          "$ caju pkg init github.com/acme/app",
+          "created caju.toml for github.com/acme/app",
+          "$ caju pkg add github.com/acme/strutil",
+          "downloading github.com/acme/strutil@1.1.0",
+          "added github.com/acme/strutil@1.1.0; 1 packages ok",
+          "$ caju run app.caju",
+          "CAJU!",
+          "$ caju pkg tree",
+          "github.com/acme/app@0.1.0",
+          "└── github.com/acme/strutil@1.1.0",
+        }, "")}
+      </core.Container>
+    </section>
+  )
+}
+
+fn Install() -> *ui.Node {
+  cmds := []str{i18n.site("install"), "caju run hello.caju", "caju build -o hello hello.caju\ncaju build --target windows hello.caju"}
+  steps := []*ui.Node{}
+  for i, s := range i18n.tv("home.installSteps").items {
+    title := s.get_str("title", "")
+    steps = append(steps, (
+      <li class="flex min-w-0 flex-col gap-3">
+        <div class="flex items-center gap-3">
+          {core.step_number(i + 1, true)}
+          <div class="text-lg font-bold">{title}</div>
+        </div>
+        <div class="flex items-start gap-2 rounded-[10px] bg-inverse-panel py-2.5 pr-2 pl-[18px]">
+          <code class="flex-1 py-1 font-mono text-sm leading-relaxed break-all whitespace-pre-wrap">{cmds[i]}</code>
+          <core.CopyButton text={cmds[i]} label={i18n.tr("ui.copy") + ": " + title} cls={core.btn("copy-inverse")} />
+        </div>
+        <div class="text-sm leading-normal text-inverse-muted">{s.get_str("note", "")}</div>
+      </li>
+    ))
+  }
+  return (
+    <section id="install" class="relative overflow-hidden bg-inverse text-inverse-foreground">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-[#C8232F] opacity-10 [mask-image:linear-gradient(90deg,transparent_40%,black_100%)]">
+        {core.cashew_pattern("install-pattern", "", "")}
+      </div>
+      <core.Container cls="flex flex-col gap-11 py-20 sm:py-24">
+        <div class="flex flex-wrap items-center gap-5">
+          {core.caju_icon("invertido", 64, "dark:hidden", "")}
+          {core.caju_icon("principal", 64, "hidden dark:block", "")}
+          <h2 class="text-[34px] leading-[1.1] font-bold tracking-[-0.035em] sm:text-[44px]">{i18n.tr("home.installTitle")}</h2>
+        </div>
+        <ol class="grid grid-cols-1 gap-7 md:grid-cols-3">{steps}</ol>
+      </core.Container>
+    </section>
+  )
+}
+
+fn Cta() -> *ui.Node {
+  return (
+    <section class="relative overflow-hidden">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary opacity-[0.16] [mask-image:radial-gradient(ellipse_50%_60%_at_50%_50%,transparent_55%,black_100%)]">
+        {core.cashew_pattern("cta-pattern", "", "")}
+      </div>
+      <core.Container cls="flex flex-col items-center gap-6 py-20 text-center sm:py-24">
+        {core.themed_icon(96, "", "")}
+        <h2 class="max-w-[720px] text-balance text-[36px] leading-[1.1] font-bold tracking-[-0.03em] sm:text-5xl">{i18n.tr("home.ctaTitle")}</h2>
+        <p class="max-w-[560px] leading-relaxed text-muted-foreground">{i18n.tr("home.ctaLead")}</p>
+        <div class="flex flex-wrap justify-center gap-3.5">
+          <a class={core.BIG_PRIMARY} href="#install">{i18n.tr("home.install")}</a>
+          <a href={i18n.site("repo")} class={core.BIG_OUTLINE}>{i18n.tr("home.ctaSource")}</a>
+        </div>
+      </core.Container>
+    </section>
+  )
+}
+
+export fn Home() -> *ui.Node {
+  return (
+    <>
+      <Hero />
+      <Features />
+      <Code />
+      <Performance />
+      <Packages />
+      <Install />
+      <Cta />
+    </>
+  )
+}

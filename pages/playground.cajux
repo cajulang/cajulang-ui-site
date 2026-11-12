@@ -1,0 +1,442 @@
+# The playground: the Caju compiler (WebAssembly, in a worker of the page) compiles and runs the
+# program in the browser. Files, examples, links (#code= / #files=) and the last program written.
+import ui "../caju-ui/ui"
+import "std/json"
+import "std/strings"
+import "std/base64"
+import "./i18n"
+import "./core"
+import "./icons"
+import "./highlight"
+import "./pages/home"
+
+const MAIN = "main.caju"
+const STORE = "caju-playground-files"
+const HELLO = "fn greet(name: str) -> str {\n  return \"Hello, \" + name + \"!\"\n}\n\nprint(greet(\"world\"))\n"
+const MULTI_MAIN = "import \"geometry\"\n\nhome := geometry.Point{0, 0}\nmarket := geometry.Point{3, 4}\nprint(\"distance:\", geometry.distance(home, market))\n"
+const MULTI_GEO = "import \"std/math\"\n\nexport struct Point { x: num, y: num }\n\nexport fn distance(a: Point, b: Point) -> num {\n  dx := b.x - a.x\n  dy := b.y - a.y\n  return math.sqrt(dx * dx + dy * dy)\n}\n"
+# the examples that run in a browser (no packages, sockets or test runner)
+const RUNNABLE = "types.caju closures.caju maps.caju defer.caju shapes.caju embed.caju typeswitch.caju divide.caju recover.caju json.caju files.caju crypto.caju"
+
+export struct PFile {
+  name: str
+  code: str
+}
+
+struct Example {
+  id: str
+  title: str
+  files: []PFile
+}
+
+struct Line {
+  text: str
+  kind: str     # out, err, info
+}
+
+fn p(key: str) -> str { return i18n.tr("playground." + key) }
+
+fn examples() -> []Example {
+  out := []Example{
+    Example{"hello", p("hello"), []PFile{PFile{MAIN, HELLO}}},
+    Example{"multi", p("multiTitle"), []PFile{PFile{MAIN, MULTI_MAIN}, PFile{"geometry.caju", MULTI_GEO}}},
+  }
+  for _, file := range strings.split(RUNNABLE, " ") {
+    e := home.example(file)
+    out = append(out, Example{file, i18n.tv("examples.items").field(file).get_str("title", ""), []PFile{PFile{MAIN, e.get_str("code", "") + "\n"}}})
+  }
+  return out
+}
+
+# the files of a link: #code=<one file> or #files=<JSON [[name, code], ...]>
+fn from_hash(h: str) -> []PFile {
+  if strings.has_prefix(h, "#code=") {
+    code, err := base64.url_decode(h[6:])
+    if err != nil { return nil }
+    return []PFile{PFile{MAIN, code}}
+  }
+  if strings.has_prefix(h, "#files=") {
+    text, err := base64.url_decode(h[7:])
+    if err != nil { return nil }
+    return parse_files(text, true)
+  }
+  return nil
+}
+
+# [[name, code], ...] (pairs) or [{"name", "code"}, ...] (the saved files)
+fn parse_files(text: str, pairs: bool) -> []PFile {
+  v, err := json.parse(text)
+  if err != nil || v.kind != "array" { return nil }
+  out := []PFile{}
+  has_main := false
+  for _, x := range v.items {
+    f := PFile{}
+    if pairs {
+      if x.kind != "array" || len(x.items) < 2 || x.items[0].kind != "string" || x.items[1].kind != "string" { continue }
+      f = PFile{x.items[0].s, x.items[1].s}
+    } else {
+      f = PFile{x.get_str("name", ""), x.get_str("code", "")}
+    }
+    if f.name == MAIN { has_main = true }
+    out = append(out, f)
+  }
+  if !has_main { return nil }
+  return out
+}
+
+fn to_hash(files: []PFile) -> str {
+  if len(files) == 1 { return "#code=" + base64.url_encode(files[0].code) }
+  pairs := []any{}
+  for _, f := range files { pairs = append(pairs, []any{f.name, f.code}) }
+  s, _ := json.marshal(pairs)
+  return "#files=" + base64.url_encode(s)
+}
+
+fn files_json(files: []PFile) -> str {
+  list := []any{}
+  for _, f := range files { list = append(list, map[str]any{"name": f.name, "code": f.code}) }
+  s, _ := json.marshal(list)
+  return s
+}
+
+fn valid_name(n: str) -> bool {
+  if !strings.has_suffix(n, ".caju") || len(n) <= 5 || strings.contains(n, "..") || strings.contains(n, "//") { return false }
+  for i := 0; i < len(n); i++ {
+    c := int(n[i])
+    word := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+    if i == 0 && !word { return false }
+    if !word && c != '.' && c != '/' && c != '-' { return false }
+  }
+  return true
+}
+
+fn spinner(cls: str) -> *ui.Node { return icons.icon("loader-2", cls) }
+
+struct EditorProps {
+  value: str
+  label: str
+  onChange: fn(str)
+  onRun: fn()
+}
+
+# a textarea over a highlighted copy of its text (the page keeps their scroll together and
+# handles Tab and Ctrl+Enter: public/site.js)
+fn Editor(e: EditorProps) -> *ui.Node {
+  lines := strings.split(e.value, "\n")
+  gutter := []*ui.Node{}
+  shown := []*ui.Node{}
+  for i, line := range lines {
+    gutter = append(gutter, <div>{i + 1}</div>)
+    shown = append(shown, <div>{highlight.line_nodes(line)}</div>)
+  }
+  box := "m-0 px-4 py-4 font-mono text-sm leading-[1.7] whitespace-pre"
+  return (
+    <div class="relative flex min-h-[420px] flex-1">
+      <div aria-hidden="true" class="w-12 shrink-0 overflow-hidden py-4 pr-2 text-right font-mono text-sm leading-[1.7] text-code-gutter select-none">{gutter}</div>
+      <div class="relative min-w-0 flex-1">
+        <pre aria-hidden="true" class={box + " pointer-events-none absolute inset-0 overflow-hidden pl-1"}><code>{shown}</code></pre>
+        <textarea data-editor="" aria-label={e.label} spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off"
+          class={box + " absolute inset-0 h-full w-full resize-none overflow-auto bg-transparent pl-1 text-transparent caret-[#F0603A] outline-none selection:bg-[#F0603A]/30 focus-visible:ring-2 focus-visible:ring-tok-kw/60"}
+          value={e.value} onInput={fn(ev: *ui.Event) { e.onChange(ev.value) }} onCajurun={fn() { e.onRun() }}></textarea>
+      </div>
+    </div>
+  )
+}
+
+fn Playground() -> *ui.Node {
+  exs := examples()
+  files := ui.use_state(exs[0].files)
+  active := ui.use_str(MAIN)
+  example := ui.use_str(exs[0].id)
+  status := ui.use_str("loading")
+  lines := ui.use_state([]Line{})
+  stats := ui.use_str("")
+  copied := ui.use_bool(false)
+  adding := ui.use_bool(false)
+  draft := ui.use_str("")
+  compile_ms := ui.use_ref(0.0)
+  hash := ui.use_ref("")
+  # the page answers asynchronously: save only after the saved program was read back
+  loaded := ui.use_ref(false)
+  F := files.v.([]PFile)
+
+  add_line := fn(text: str, kind: str) {
+    ls := lines.v.([]Line)
+    if len(ls) > 0 && ls[len(ls) - 1].kind == kind && kind != "info" {
+      nl := make([]Line, len(ls))
+      copy(nl, ls)
+      nl[len(nl) - 1].text = nl[len(nl) - 1].text + text
+      lines.set(nl)
+      return
+    }
+    lines.set(append(append([]Line{}, ls...), Line{text, kind}))
+  }
+  on_message := fn(raw: str) {
+    m, err := json.parse(raw)
+    if err != nil { return }
+    switch m.get_str("type", "") {
+    case "ready": status.set("ready")
+    case "fatal":
+      status.set("failed")
+      add_line(p("loadFailed") + ": " + m.get_str("message", "") + "\n", "err")
+    case "compiled":
+      compile_ms.current = m.get_float("ms", 0.0)
+      if m.get_bool("ok", false) {
+        status.set("running")
+      } else {
+        status.set("ready")
+        add_line(p("compileError") + "\n" + m.get_str("errors", "") + "\n", "err")
+      }
+    case "out": add_line(m.get_str("text", ""), "out")
+    case "exit":
+      status.set("ready")
+      code := m.get_int("code", 0)
+      if code != 0 { add_line(strings.replace_all(p("exit"), "{code}", str(code)) + "\n", "info") }
+      ms := int(compile_ms.current.(num) + 0.5)
+      stats.set(strings.replace_all(strings.replace_all(p("stats"), "{compile}", str(ms)), "{run}", str(int(m.get_float("ms", 0.0) + 0.5))))
+    }
+  }
+  start := fn() { ui.call("pgStart", "", on_message) }
+
+  # the worker, and the program of the link or the last one written here
+  ui.use_effect(fn() -> fn() {
+    start()
+    ui.call("location", "", fn(loc: str) {
+      h := loc[strings.index(loc, "\n") + 1:]
+      hash.current = h
+      initial := from_hash(h)
+      loaded.current = true
+      if initial != nil {
+        files.set(initial)
+        example.set("")
+        return
+      }
+      loaded.current = false
+      ui.call("storageGet", STORE, fn(saved: str) {
+        loaded.current = true
+        list := parse_files(saved, false)
+        if list != nil {
+          files.set(list)
+          example.set("")
+        } else {
+          # as the original, the program is saved from the first visit on
+          ui.call("storageSet", STORE + "\n" + files_json(files.v.([]PFile)), nil)
+        }
+      })
+    })
+    return nil
+  }, []any{})
+  saved := files_json(F)
+  ui.use_effect(fn() -> fn() {
+    if loaded.current.(bool) { ui.call("storageSet", STORE + "\n" + saved, nil) }
+    return nil
+  }, []any{saved})
+
+  cur := F[0]
+  for _, f := range F {
+    if f.name == active.v { cur = f }
+  }
+  set_code := fn(code: str) {
+    nf := []PFile{}
+    for _, f := range files.v.([]PFile) {
+      if f.name == cur.name { nf = append(nf, PFile{f.name, code}) } else { nf = append(nf, f) }
+    }
+    files.set(nf)
+  }
+  run := fn() {
+    if status.v != "ready" { return }
+    lines.set([]Line{})
+    stats.set("")
+    status.set("compiling")
+    m := map[str]any{}
+    for _, f := range files.v.([]PFile) { m[f.name] = f.code }
+    s, _ := json.marshal(m)
+    ui.call("pgRun", s, nil)
+  }
+  stop := fn() {
+    add_line("\n" + p("stopped") + "\n", "info")
+    status.set("loading")
+    start()
+  }
+  share := fn() {
+    url_hash := to_hash(files.v.([]PFile))
+    ui.call("location", "", fn(loc: str) {
+      url := loc[0:strings.index(loc, "\n")] + url_hash
+      ui.call("replaceUrl", url, nil)
+      ui.copy(url)
+      copied.set(true)
+      ui.set_timeout(1800, fn() { copied.set(false) })
+    })
+  }
+  pick := fn(id: str) {
+    for _, ex := range exs {
+      if ex.id != id { continue }
+      example.set(id)
+      files.set(ex.files)
+      active.set(MAIN)
+      lines.set([]Line{})
+      stats.set("")
+      ui.call("replaceUrl", i18n.PATH, nil)
+    }
+  }
+  bad := false
+  if adding.v && strings.trim_space(draft.v) != "" {
+    n := strings.trim_space(draft.v)
+    if !strings.has_suffix(n, ".caju") { n = n + ".caju" }
+    bad = !valid_name(n)
+    for _, f := range F {
+      if f.name == n { bad = true }
+    }
+  }
+  add_file := fn() {
+    name := strings.trim_space(draft.v)
+    if name != "" && !strings.has_suffix(name, ".caju") { name = name + ".caju" }
+    if !valid_name(name) { return }
+    for _, f := range files.v.([]PFile) {
+      if f.name == name { return }
+    }
+    stem := strings.trim_suffix(name, ".caju")
+    files.set(append(append([]PFile{}, files.v.([]PFile)...), PFile{name, "# " + name + "\nexport fn hello() -> str { return \"hello from " + stem + "\" }\n"}))
+    active.set(name)
+    adding.set(false)
+    draft.set("")
+  }
+  remove_file := fn(name: str) {
+    nf := []PFile{}
+    for _, f := range files.v.([]PFile) {
+      if f.name != name { nf = append(nf, f) }
+    }
+    files.set(nf)
+    if active.v == name { active.set(MAIN) }
+  }
+
+  busy := status.v == "compiling" || status.v == "running"
+  run_button := ui.empty()
+  if busy {
+    run_button = <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("stop")} onClick={stop}>{icons.icon("square", "")} {p("stop")}</button>
+  } else {
+    icon := icons.icon("play", "")
+    label := p("run")
+    if status.v == "loading" {
+      icon = spinner("animate-spin")
+      label = p("loading")
+    }
+    run_button = <button data-slot="button" data-variant="default" data-size="default" class={core.btn("run")} disabled={status.v != "ready"} onClick={run}>{icon}{label}</button>
+  }
+  options := []*ui.Node{}
+  if example.v == "" { options = append(options, <option value="" selected={true}>—</option>) }
+  for _, ex := range exs { options = append(options, <option value={ex.id} selected={ex.id == example.v}>{ex.title}</option>) }
+
+  tabs := []*ui.Node{}
+  for _, f := range F {
+    name := f.name
+    on := name == cur.name
+    cls := "flex h-[34px] shrink-0 items-center border-t-2 font-mono text-[13px] border-transparent text-code-dim hover:text-code-text"
+    if on { cls = "flex h-[34px] shrink-0 items-center border-t-2 font-mono text-[13px] border-tok-kw bg-code" }
+    rm := strings.replace_all(p("removeFile"), "{name}", name)
+    tabs = append(tabs, (
+      <div class={cls}>
+        <button role="tab" aria-selected={core.bs(on)} onClick={fn() { active.set(name) }} class="flex h-full items-center gap-2 pr-2 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-tok-kw/60">
+          {ui.when(name == MAIN, core.caju_icon("principal", 16, "", ""))}
+          {name}
+        </button>
+        {ui.when(name != MAIN, (
+          <button onClick={fn() { remove_file(name) }} aria-label={rm} title={rm} class="mr-1.5 rounded p-1 text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("x", "size-3.5")}</button>
+        ))}
+      </div>
+    ))
+  }
+  if !adding.v {
+    tabs = append(tabs, (
+      <button onClick={fn() { adding.set(true) }} aria-label={p("addFile")} title={p("addFile")} class="mb-1 ml-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("plus", "size-4")}</button>
+    ))
+  } else {
+    input_cls := "h-8 w-40 rounded-md border bg-code px-2 font-mono text-[13px] text-code-text outline-none border-code-ring focus:border-tok-kw"
+    if bad { input_cls = "h-8 w-40 rounded-md border bg-code px-2 font-mono text-[13px] text-code-text outline-none border-[#ff9b85]" }
+    title := p("newFileName")
+    if bad { title = p("badName") }
+    tabs = append(tabs, (
+      <form class="mb-1 ml-1 flex shrink-0 items-center gap-1" onSubmit={add_file}>
+        <input autofocus="" value={draft.v} onInput={fn(e: *ui.Event) { draft.set(e.value) }}
+          onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { adding.set(false) } }}
+          onBlur={fn() { if strings.trim_space(draft.v) == "" { adding.set(false) } }}
+          aria-label={p("newFileName")} aria-invalid={core.bs(bad)} title={title} placeholder="util.caju" spellcheck="false" class={input_cls} />
+        <button type="submit" aria-label={p("addFile")} class="rounded-md p-1.5 text-code-dim hover:bg-white/10 hover:text-code-text">{icons.icon("check", "size-4")}</button>
+      </form>
+    ))
+  }
+
+  status_text := ui.empty()
+  if status.v == "compiling" { status_text = ui.frag([]*ui.Node{spinner("size-3.5 animate-spin"), ui.text(" " + p("compiling"))}) }
+  if status.v == "running" { status_text = ui.frag([]*ui.Node{spinner("size-3.5 animate-spin"), ui.text(" " + p("running"))}) }
+  if !busy { status_text = ui.text(stats.v) }
+  out := []*ui.Node{}
+  ls := lines.v.([]Line)
+  if len(ls) == 0 && !busy {
+    out = append(out, <span class="text-code-dim">{p("empty")}</span>)
+  } else {
+    for _, l := range ls {
+      let cls: any = nil
+      if l.kind == "err" { cls = "text-[#ff9b85]" }
+      if l.kind == "info" { cls = "text-code-dim" }
+      out = append(out, <span class={cls}>{l.text}</span>)
+    }
+  }
+  copy_icon := icons.icon("link-2", "")
+  copy_label := p("share")
+  if copied.v {
+    copy_icon = icons.icon("check", "")
+    copy_label = p("linkCopied")
+  }
+  return (
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center gap-3">
+        {run_button}
+        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+          {p("example")}
+          <select class="h-11 rounded-xl border bg-card px-3 text-[15px] text-foreground" onChange={fn(e: *ui.Event) { pick(e.value) }}>{options}</select>
+        </label>
+        <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("share")} aria-live="polite" onClick={share}>{copy_icon} {copy_label}</button>
+        <button data-slot="button" data-variant="ghost" data-size="default" class={core.btn("reset")} title={p("reset")} aria-label={p("reset")}
+          onClick={fn() {
+            id := example.v
+            if id == "" { id = exs[0].id }
+            pick(id)
+          }}>{icons.icon("rotate-ccw", "")}</button>
+        <span class="ml-auto hidden text-sm text-muted-foreground sm:inline">{p("shortcut")}</span>
+      </div>
+      <div class="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-2">
+        <section aria-label={p("editor")} class="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
+          <div role="tablist" aria-label={p("files")} class="flex min-h-10 items-end gap-0.5 overflow-x-auto bg-code-bar pl-3">{tabs}</div>
+          {ui.when(bad, <div class="bg-code-bar px-4 pb-2 text-xs text-[#ff9b85]">{p("badName")}</div>)}
+          {ui.keyed(cur.name, <Editor value={cur.code} label={p("editor") + ": " + cur.name} onChange={set_code} onRun={run} />)}
+        </section>
+        <section aria-label={p("output")} class="flex min-h-[320px] min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
+          <div class="flex h-10 items-center justify-between bg-code-bar px-4 font-mono text-[13px] text-code-dim">
+            <span>{p("output")}</span>
+            <span aria-live="polite" class="flex items-center gap-2">{status_text}</span>
+          </div>
+          <div role="log" data-autoscroll="" class="max-h-[70vh] flex-1 overflow-auto px-5 py-4 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">{out}</div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+export fn PlaygroundPage() -> *ui.Node {
+  return (
+    <>
+      <core.Container cls="flex flex-col gap-3 pt-10 pb-6 sm:pt-14">
+        <h1 class="text-[40px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[52px]">{p("title")}</h1>
+        <p class="max-w-[720px] text-lg leading-relaxed text-muted-foreground">{p("lead")}</p>
+      </core.Container>
+      <core.Container cls="pb-12"><Playground /></core.Container>
+      <section class="bg-surface">
+        <core.Container cls="flex flex-col gap-3 py-14">
+          <h2 class="text-[28px] font-bold tracking-[-0.03em]">{p("howTitle")}</h2>
+          <p class="max-w-[760px] text-base leading-[1.75] text-foreground/85">{i18n.rt("playground.how")}</p>
+        </core.Container>
+      </section>
+    </>
+  )
+}

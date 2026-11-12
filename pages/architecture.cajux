@@ -1,0 +1,673 @@
+# The page about how Caju works: the compiler's pipeline, bootstrapping, values in memory, the
+# garbage collector, calls and the browser.
+import ui "../caju-ui/ui"
+import "std/json"
+import "std/math"
+import "std/strings"
+import "./i18n"
+import "./core"
+import "./icons"
+import "./highlight"
+
+fn pad2(i: int) -> str {
+  if i < 10 { return "0" + str(i) }
+  return str(i)
+}
+
+fn a(path: str) -> str { return i18n.tr("arch." + path) }
+
+# ---------------------------------------------------------------------------------------------
+# Pipeline
+
+fn token_color(t: str) -> str {
+  switch t {
+  case "KEYWORD": return "text-tok-kw"
+  case "NAME": return "text-tok-type"
+  case "OP": return "text-code-text"
+  case "NUMBER": return "text-tok-num"
+  }
+  return "text-code-dim"
+}
+
+fn highlighted(code: str) -> []*ui.Node {
+  out := []*ui.Node{}
+  for i, line := range strings.split(code, "\n") {
+    out = append(out, (
+      <div class="flex gap-4">
+        <span aria-hidden="true" class="w-5 shrink-0 text-right text-code-gutter select-none">{i + 1}</span>
+        <span class="whitespace-pre">{highlight.line_nodes(line)}</span>
+      </div>
+    ))
+  }
+  return out
+}
+
+fn is_word(c: int) -> bool { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' }
+
+# whether s is a run of key="value" / nres=N attributes (each followed by optional spaces)
+fn attrs_only(s: str) -> bool {
+  i := 0
+  n := 0
+  while i < len(s) {
+    if strings.has_prefix(s[i:], "nres=") && i + 5 < len(s) && int(s[i + 5]) >= '0' && int(s[i + 5]) <= '9' {
+      i += 5
+      while i < len(s) && int(s[i]) >= '0' && int(s[i]) <= '9' { i++ }
+    } else {
+      j := i
+      while j < len(s) && is_word(int(s[j])) { j++ }
+      if j == i || j + 1 >= len(s) || int(s[j]) != '=' || int(s[j + 1]) != '"' { return false }
+      k := strings.index_from(s, "\"", j + 2)
+      if k < 0 { return false }
+      i = k + 1
+    }
+    while i < len(s) && int(s[i]) == 32 { i++ }
+    n++
+  }
+  return n > 0
+}
+
+# a line of the checked tree with its annotations (type="int"...) in green
+fn checked_line(line: str) -> *ui.Node {
+  for p := 1; p < len(line); p++ {
+    if int(line[p - 1]) != 32 || int(line[p]) == 32 { continue }
+    if !attrs_only(line[p:]) { continue }
+    w := p - 1
+    while w > 0 && int(line[w - 1]) == 32 { w-- }
+    return <div>{line[0:w]}{line[w:p]}<span class="text-tok-str">{line[p:]}</span></div>
+  }
+  return <div>{line}</div>
+}
+
+fn asm_line(line: str) -> *ui.Node {
+  c := strings.index(line, ";")
+  if c < 0 { return <div>{line}</div> }
+  return <div>{line[0:c]}<span class="text-tok-comment italic">{line[c:]}</span></div>
+}
+
+fn Pipeline() -> *ui.Node {
+  sel := ui.use_str("lexer")
+  target := ui.use_str("x86")
+  stages := i18n.tv("arch.stages").items
+  idx := 0
+  buttons := []*ui.Node{}
+  for k, s := range stages {
+    id := s.get_str("id", "")
+    on := id == sel.v
+    if on { idx = k }
+    cls := "flex flex-col items-start rounded-xl px-3.5 py-2 text-left transition-colors bg-card shadow-[inset_0_0_0_1px_var(--color-border)] hover:shadow-[inset_0_0_0_1px_var(--color-primary)]"
+    what_cls := "font-mono text-xs text-muted-foreground"
+    if on {
+      cls = "flex flex-col items-start rounded-xl px-3.5 py-2 text-left transition-colors bg-primary text-primary-foreground"
+      what_cls = "font-mono text-xs opacity-85"
+    }
+    buttons = append(buttons, (
+      <li class="flex items-center">
+        <button onClick={fn() { sel.set(id) }} aria-pressed={core.bs(on)} class={cls}>
+          <span class="text-[15px] font-bold">{s.get_str("name", "")}</span>
+          <span class={what_cls}>{s.get_str("what", "")}</span>
+        </button>
+        {ui.when(k + 1 < len(stages), icons.icon("chevron-right", "mx-1 size-4 shrink-0 text-muted-foreground"))}
+      </li>
+    ))
+  }
+  stage := stages[idx]
+  src := i18n.C.get_str("arch.sampleSource", "")
+  out := ui.empty()
+  switch sel.v {
+  case "source": out = ui.frag(highlighted(src))
+  case "lexer":
+    toks := []*ui.Node{}
+    for _, t := range i18n.C.get_array("arch.tokens") {
+      pos := t.items[0].s
+      typ := t.items[1].s
+      toks = append(toks, (
+        <li class="flex flex-col rounded-md bg-white/5 px-2 py-1 leading-tight" title={pos + " " + typ}>
+          <span class={"text-[13px] " + token_color(typ)}>{t.items[2].s}</span>
+          <span class="text-[10px] text-code-dim">{typ} {pos}</span>
+        </li>
+      ))
+    }
+    out = <ol class="flex flex-wrap gap-1.5">{toks}</ol>
+  case "parser": out = <pre class="whitespace-pre">{i18n.C.get_str("arch.parseTree", "")}</pre>
+  case "linker": out = <pre class="whitespace-pre">{i18n.C.get_str("arch.linkedTree", "")}</pre>
+  case "checker":
+    lines := []*ui.Node{}
+    for _, l := range strings.split(i18n.C.get_str("arch.checkedTree", ""), "\n") { lines = append(lines, checked_line(l)) }
+    out = <pre class="whitespace-pre">{lines}</pre>
+  case "codegen":
+    code := i18n.C.get_str("arch.x86", "")
+    if target.v == "wasm" { code = i18n.C.get_str("arch.wasm", "") }
+    lines := []*ui.Node{}
+    for _, l := range strings.split(code, "\n") { lines = append(lines, asm_line(l)) }
+    out = (
+      <>
+        <pre class="whitespace-pre">{lines}</pre>
+        <p class="mt-4 font-sans text-sm leading-relaxed text-code-dim">{i18n.rich(a("codegenNote"))}</p>
+      </>
+    )
+  case "binary":
+    out = (
+      <div class="flex flex-col gap-4 font-sans">
+        <div class="rounded-xl bg-white/5 p-4">
+          <div class="flex items-baseline justify-between"><span class="font-bold">Linux · ELF</span><span class="font-mono text-tok-num">53 KB</span></div>
+          <div class="mt-2 font-mono text-xs text-code-dim">$ caju build -o main main.caju</div>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4">
+          <div class="flex items-baseline justify-between"><span class="font-bold">WebAssembly</span><span class="font-mono text-tok-num">107 KB</span></div>
+          <div class="mt-2 font-mono text-xs text-code-dim">$ caju build --target wasm -o main.wasm main.caju</div>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 font-mono text-[13px]">
+          <div class="text-code-dim">$ ./main</div>
+          <div>5</div>
+        </div>
+      </div>
+    )
+  }
+  tabs := []*ui.Node{}
+  for _, tk := range []str{"x86", "wasm"} {
+    on := target.v == tk
+    cls := "rounded-md px-2.5 py-1 hover:bg-white/10"
+    if on { cls = "rounded-md px-2.5 py-1 bg-tok-kw text-[#1E1712]" }
+    tabs = append(tabs, <button role="tab" aria-selected={core.bs(on)} onClick={fn() { target.set(tk) }} class={cls}>{a(tk)}</button>)
+  }
+  return (
+    <div class="flex flex-col gap-6">
+      <ol class="flex flex-wrap items-center gap-y-3" aria-label="Compiler stages">{buttons}</ol>
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-baseline gap-3">
+            <span class="font-mono text-sm text-primary">{pad2(idx + 1)}</span>
+            <h3 class="text-2xl font-bold">{stage.get_str("name", "")}</h3>
+          </div>
+          <p class="text-base leading-[1.75] text-foreground/85">{i18n.rich(stage.get_str("desc", ""))}</p>
+          <div class="overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
+            <div class="bg-code-bar px-4 py-2 font-mono text-xs text-code-dim">{a("sample")} · main.caju</div>
+            <pre class="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-[1.7]"><code>{highlighted(src)}</code></pre>
+          </div>
+        </div>
+        <div class="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-code text-code-text shadow-[0_0_0_1px_var(--color-code-ring)]">
+          <div class="flex min-h-10 flex-wrap items-center justify-between gap-2 bg-code-bar px-4 py-1.5 font-mono text-xs text-code-dim">
+            <span>{a("output")}: {stage.get_str("what", "")}</span>
+            {ui.when(sel.v == "codegen", <div role="tablist" class="flex gap-1">{tabs}</div>)}
+          </div>
+          <div class="max-h-[460px] min-h-[300px] flex-1 overflow-auto px-4 py-4 font-mono text-[13px] leading-[1.7]">{out}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+# ---------------------------------------------------------------------------------------------
+# Values in memory
+
+fn cell(top: str, content: str, tone: str, wide: bool) -> *ui.Node {
+  cls := "flex h-11 items-center justify-center border-y border-l px-3 font-mono text-sm last:border-r"
+  if wide { cls = cls + " min-w-24" } else { cls = cls + " min-w-12" }
+  if tone == "ptr" { cls = cls + " bg-accent text-accent-foreground" }
+  if tone == "meta" { cls = cls + " bg-muted text-muted-foreground" }
+  if tone == "plain" { cls = cls + " bg-card" }
+  return (
+    <div class="flex flex-col items-center gap-1">
+      <span class="h-4 font-mono text-[10px] text-muted-foreground">{top}</span>
+      <div class={cls}>{content}</div>
+    </div>
+  )
+}
+
+fn obj(label: str, cells: []*ui.Node) -> *ui.Node {
+  return (
+    <div class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-muted-foreground">{label}</span>
+      <div class="flex">{cells}</div>
+    </div>
+  )
+}
+
+fn arrow() -> *ui.Node { return icons.icon("arrow-right", "mt-5 size-5 shrink-0 text-primary") }
+
+fn ptr(label: str) -> *ui.Node { return obj(label, []*ui.Node{cell("", "●", "ptr", false)}) }
+
+fn diagram(id: str) -> (str, []*ui.Node) {
+  switch id {
+  case "str":
+    return "s := \"caju\"", []*ui.Node{ptr("s"), arrow(), obj("str", []*ui.Node{
+      cell("len", "4", "meta", false), cell("byte", "c", "plain", false), cell("byte", "a", "plain", false),
+      cell("byte", "j", "plain", false), cell("byte", "u", "plain", false), cell("NUL", "0", "meta", false),
+    })}
+  case "slice":
+    return "xs := []int{7, 9, 4}", []*ui.Node{ptr("xs"), arrow(),
+      obj("header", []*ui.Node{cell("data", "●", "ptr", false), cell("len", "3", "meta", false), cell("cap", "3", "meta", false)}),
+      arrow(),
+      obj("[3]int", []*ui.Node{cell("[0]", "7", "plain", false), cell("[1]", "9", "plain", false), cell("[2]", "4", "plain", false)}),
+    }
+  case "struct":
+    return "p := Point{x: 3, y: 4}", []*ui.Node{ptr("p"), arrow(), obj("Point", []*ui.Node{cell("x", "3", "plain", false), cell("y", "4", "plain", false)})}
+  case "map":
+    return "m := map[str]int{\"a\": 1, \"b\": 2}", []*ui.Node{ptr("m"), arrow(),
+      obj("table", []*ui.Node{cell("count", "2", "meta", false), cell("entries", "●", "ptr", false), cell("index", "●", "ptr", false)}),
+      arrow(),
+      <div class="flex flex-col gap-3">
+        {obj("entries (insertion order)", []*ui.Node{cell("key", "\"a\"", "plain", false), cell("value", "1", "plain", false), cell("key", "\"b\"", "plain", false), cell("value", "2", "plain", false)})}
+        {obj("index (tag | position + 1)", []*ui.Node{cell("", "—", "meta", false), cell("", "t·2", "plain", false), cell("", "—", "meta", false), cell("", "t·1", "plain", false)})}
+      </div>,
+    }
+  }
+  return "let v: any = 42", []*ui.Node{ptr("v"), arrow(),
+    obj("box", []*ui.Node{cell("type", "●", "ptr", false), cell("value", "42", "plain", false)}),
+    arrow(),
+    obj("descriptor of int", []*ui.Node{cell("kind", "1", "meta", false), cell("name", "\"int\"", "meta", true), cell("…", "…", "meta", false)}),
+  }
+}
+
+fn Values() -> *ui.Node {
+  values := i18n.tv("arch.values").items
+  sel := ui.use_str(values[0].get_str("id", ""))
+  desc := ""
+  tabs := []*ui.Node{}
+  for _, x := range values {
+    id := x.get_str("id", "")
+    on := id == sel.v
+    if on { desc = x.get_str("desc", "") }
+    cls := "h-10 rounded-full px-4 text-[15px] font-medium transition-colors bg-card shadow-[inset_0_0_0_1px_var(--color-border)] hover:text-primary"
+    if on { cls = "h-10 rounded-full px-4 text-[15px] font-medium transition-colors bg-foreground text-background" }
+    tabs = append(tabs, <button role="tab" aria-selected={core.bs(on)} onClick={fn() { sel.set(id) }} class={cls}>{x.get_str("title", "")}</button>)
+  }
+  code, parts := diagram(sel.v)
+  return (
+    <div class="flex flex-col gap-5">
+      <div role="tablist" class="flex flex-wrap gap-2">{tabs}</div>
+      <div class="flex flex-col gap-5 rounded-[20px] bg-card p-6 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-8">
+        <code class="self-start rounded-lg bg-code px-3 py-1.5 font-mono text-sm text-code-text">{code}</code>
+        <div class="flex flex-wrap items-start gap-x-3 gap-y-4 overflow-x-auto pb-1">{parts}</div>
+        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(desc)}</p>
+      </div>
+    </div>
+  )
+}
+
+# ---------------------------------------------------------------------------------------------
+# The garbage collector, step by step
+
+struct GNode {
+  id: str
+  x: int
+  y: int
+  label: str
+}
+
+let ROOTS = []GNode{GNode{"s1", 60, 60, "stack: list"}, GNode{"s2", 60, 150, "stack: user"}, GNode{"g1", 60, 240, "global: cache"}}
+let OBJS = []GNode{
+  GNode{"a", 250, 50, "[]int"}, GNode{"b", 410, 40, "array"}, GNode{"c", 250, 150, "*User"},
+  GNode{"d", 410, 130, "\"Ana\""}, GNode{"e", 560, 160, "map"}, GNode{"f", 250, 250, "map"},
+  GNode{"g", 410, 240, "\"old\""}, GNode{"h", 560, 60, "struct"}, GNode{"i", 560, 260, "closure"},
+}
+let EDGES0 = []str{"s1>a", "a>b", "s2>c", "c>d", "c>e", "g1>f", "f>g", "h>b", "i>g"}
+
+fn edge_from(e: str) -> str { return e[0:strings.index(e, ">")] }
+fn edge_to(e: str) -> str { return e[strings.index(e, ">") + 1:] }
+
+fn gpos(id: str) -> GNode {
+  for _, n := range ROOTS {
+    if n.id == id { return n }
+  }
+  for _, n := range OBJS {
+    if n.id == id { return n }
+  }
+  return GNode{}
+}
+
+fn is_root(id: str) -> bool { return id == "s1" || id == "s2" || id == "g1" }
+
+fn num_s(v: num) -> str {
+  # integers without ".0", as JavaScript writes them
+  if v == num(int(v)) { return str(int(v)) }
+  return str(v)
+}
+
+fn GcDemo() -> *ui.Node {
+  edges := ui.use_state(EDGES0)
+  marked := ui.use_state(map[str]bool{})
+  freed := ui.use_state(map[str]bool{})
+  phase := ui.use_str("idle")
+  timer := ui.use_ref(0)
+  E := edges.v.([]str)
+  M := marked.v.(map[str]bool)
+  F := freed.v.(map[str]bool)
+  ui.use_effect(fn() -> fn() {
+    return fn() {
+      t := timer.current.(int)
+      if t != 0 { ui.clear_timer(t) }
+    }
+  }, []any{})
+
+  levels := fn() -> [][]str {
+    out := [][]str{}
+    seen := map[str]bool{}
+    frontier := []str{"s1", "s2", "g1"}
+    while len(frontier) > 0 {
+      next := []str{}
+      for _, f := range frontier {
+        for _, e := range E {
+          b := edge_to(e)
+          if edge_from(e) == f && !seen[b] && !F[b] {
+            seen[b] = true
+            next = append(next, b)
+          }
+        }
+      }
+      if len(next) > 0 { out = append(out, next) }
+      frontier = next
+    }
+    return out
+  }
+  mark := fn() {
+    lv := levels()
+    marked.set(map[str]bool{})
+    phase.set("marking")
+    k := 0
+    id := 0
+    id = ui.set_interval(650, fn() {
+      if k >= len(lv) {
+        ui.clear_timer(id)
+        phase.set("marked")
+        return
+      }
+      m := map[str]bool{}
+      for key, v := range marked.v.(map[str]bool) { m[key] = v }
+      for _, x := range lv[k] { m[x] = true }
+      k++
+      marked.set(m)
+    })
+    timer.current = id
+  }
+  sweep := fn() {
+    f := map[str]bool{}
+    for key, v := range F { f[key] = v }
+    for _, o := range OBJS {
+      if !M[o.id] { f[o.id] = true }
+    }
+    freed.set(f)
+    es := []str{}
+    for _, e := range E {
+      x := edge_from(e)
+      if M[edge_to(e)] && (is_root(x) || M[x]) { es = append(es, e) }
+    }
+    edges.set(es)
+    phase.set("swept")
+  }
+  has_s2 := false
+  for _, e := range E {
+    if edge_from(e) == "s2" { has_s2 = true }
+  }
+  drop := fn() {
+    es := []str{}
+    for _, e := range E {
+      if edge_from(e) != "s2" { es = append(es, e) }
+    }
+    edges.set(es)
+    marked.set(map[str]bool{})
+    phase.set("idle")
+  }
+  reset := fn() {
+    t := timer.current.(int)
+    if t != 0 { ui.clear_timer(t) }
+    edges.set(EDGES0)
+    marked.set(map[str]bool{})
+    freed.set(map[str]bool{})
+    phase.set("idle")
+  }
+
+  lines := []*ui.Node{}
+  for _, e := range E {
+    x := edge_from(e)
+    y := edge_to(e)
+    p := gpos(x)
+    q := gpos(y)
+    dx := num(q.x - p.x)
+    dy := num(q.y - p.y)
+    l := math.sqrt(dx * dx + dy * dy)
+    r := 44.0
+    if strings.has_prefix(x, "s") || strings.has_prefix(x, "g1") { r = 52.0 }
+    hot := M[y]
+    stroke := "var(--muted-foreground)"
+    sw := "1.4"
+    if hot {
+      stroke = "var(--primary)"
+      sw = "2.2"
+    }
+    lines = append(lines, (
+      <line x1={num_s(num(p.x) + (dx / l) * r)} y1={num_s(num(p.y) + (dy / l) * 18.0)} x2={num_s(num(q.x) - (dx / l) * 46.0)} y2={num_s(num(q.y) - (dy / l) * 20.0)} stroke={stroke} stroke-width={sw} marker-end="url(#gc-arrow)" opacity="0.9"></line>
+    ))
+  }
+  roots := []*ui.Node{}
+  for _, rt := range ROOTS {
+    roots = append(roots, (
+      <g>
+        <rect x={rt.x - 54} y={rt.y - 18} width="108" height="36" rx="8" fill="var(--accent)" stroke="var(--border)"></rect>
+        <text x={rt.x} y={rt.y + 4} text-anchor="middle" class="fill-accent-foreground font-mono text-[11px]">{rt.label}</text>
+      </g>
+    ))
+  }
+  objs := []*ui.Node{}
+  for _, o := range OBJS {
+    s := "live"
+    if F[o.id] { s = "free" } else if M[o.id] { s = "marked" } else if phase.v == "marked" { s = "garbage" }
+    fill := map[str]str{"live": "var(--card)", "marked": "var(--primary)", "garbage": "var(--muted)", "free": "transparent"}[s]
+    text := map[str]str{"live": "var(--foreground)", "marked": "var(--primary-foreground)", "garbage": "var(--muted-foreground)", "free": "var(--muted-foreground)"}[s]
+    stroke := "var(--border)"
+    if s == "free" { stroke = "var(--muted-foreground)" }
+    if s == "garbage" { stroke = "var(--destructive)" }
+    let dash: any = nil
+    if s == "free" || s == "garbage" { dash = "4 3" }
+    opacity := "1"
+    if s == "free" { opacity = "0.35" }
+    objs = append(objs, (
+      <g class="transition-opacity" opacity={opacity}>
+        <rect x={o.x - 46} y={o.y - 20} width="92" height="40" rx="10" fill={fill} stroke={stroke} stroke-dasharray={dash} stroke-width="1.4" style="transition:fill 300ms"></rect>
+        <text x={o.x} y={o.y + 4} text-anchor="middle" class="font-mono text-[12px]" fill={text}>{o.label}</text>
+      </g>
+    ))
+  }
+  legend := []*ui.Node{}
+  for _, k := range []str{"live", "marked", "garbage", "free"} {
+    sw := map[str]str{
+      "live": "bg-card shadow-[inset_0_0_0_1px_var(--color-border)]",
+      "marked": "bg-primary",
+      "garbage": "border border-dashed border-destructive bg-muted",
+      "free": "border border-dashed border-muted-foreground opacity-50",
+    }[k]
+    legend = append(legend, <li class="flex items-center gap-2"><span aria-hidden="true" class={"inline-block size-3.5 rounded " + sw}></span>{a("gcLegend." + k)}</li>)
+  }
+  return (
+    <div class="flex flex-col gap-4 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)] sm:p-7">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button data-slot="button" data-variant="default" data-size="default" class={core.btn("gc-mark")} disabled={phase.v == "marking"} onClick={mark}>1. {a("gcMark")}</button>
+        <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("gc-sweep")} disabled={phase.v != "marked"} onClick={sweep}>2. {a("gcSweep")}</button>
+        <button data-slot="button" data-variant="outline" data-size="default" class={core.btn("gc-drop")} disabled={phase.v == "marking" || !has_s2} onClick={drop}>{a("gcGarbage")}</button>
+        <button data-slot="button" data-variant="ghost" data-size="default" class={core.btn("gc-reset")} onClick={reset}>{a("gcReset")}</button>
+      </div>
+      <p aria-live="polite" class="min-h-12 text-[15px] leading-relaxed text-foreground/85">{a("gcSteps." + phase.v)}</p>
+      <div class="overflow-x-auto">
+        <svg viewBox="0 0 660 300" class="min-w-[560px]" role="img" aria-label={a("gcRoots") + " → " + a("gcHeap")}>
+          <defs>
+            <marker id="gc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted-foreground)"></path>
+            </marker>
+          </defs>
+          <text x="60" y="20" text-anchor="middle" class="fill-muted-foreground text-[12px] font-medium">{a("gcRoots")}</text>
+          <text x="410" y="20" text-anchor="middle" class="fill-muted-foreground text-[12px] font-medium">{a("gcHeap")}</text>
+          {lines}
+          {roots}
+          {objs}
+        </svg>
+      </div>
+      <ul class="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">{legend}</ul>
+    </div>
+  )
+}
+
+# ---------------------------------------------------------------------------------------------
+# Static pieces
+
+fn steps(items: []*json.Value, hot: []int) -> *ui.Node {
+  out := []*ui.Node{}
+  for i, s := range items {
+    is_hot := false
+    for _, h := range hot {
+      if h == i { is_hot = true }
+    }
+    bg := "bg-card"
+    if is_hot { bg = "bg-accent" }
+    out = append(out, (
+      <li class="relative flex flex-col">
+        <div class={"flex h-full flex-col gap-2 rounded-2xl p-5 shadow-[inset_0_0_0_1px_var(--color-border)] " + bg}>
+          <div class="flex items-center gap-2">
+            <span class="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
+            <h3 class="font-bold">{s.get_str("title", "")}</h3>
+          </div>
+          <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(s.get_str("desc", ""))}</p>
+        </div>
+        {ui.when(i + 1 < len(items), ui.frag([]*ui.Node{
+          icons.icon("arrow-right", "absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full bg-background text-primary md:block"),
+          icons.icon("arrow-down", "mx-auto my-1 size-5 text-primary md:hidden"),
+        }))}
+      </li>
+    ))
+  }
+  return <ol class="grid grid-cols-1 gap-3 md:grid-flow-col md:auto-cols-fr">{out}</ol>
+}
+
+fn frame_row(label: str, cells: []str, tone: str) -> *ui.Node {
+  out := []*ui.Node{}
+  for _, c := range cells { out = append(out, <div class={"border-x border-t px-3 py-1.5 font-mono text-[13px] last:border-b " + tone}>{c}</div>) }
+  return (
+    <div class="flex items-center gap-3">
+      <span class="w-28 shrink-0 text-right text-xs text-muted-foreground">{label}</span>
+      <div class="flex flex-1 flex-col">{out}</div>
+    </div>
+  )
+}
+
+fn frame() -> *ui.Node {
+  l := fn(k: str) -> str { return a("frameLabels." + k) }
+  return (
+    <div class="flex flex-col gap-1.5 rounded-[20px] bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
+      <div class="mb-1 text-sm font-bold">↑ {l("caller")}</div>
+      {frame_row(l("locals"), []str{"sum", "list ●"}, "bg-muted/60")}
+      {frame_row(l("args"), []str{"a = 2", "b = 3"}, "bg-accent")}
+      <div class="flex items-center gap-3">
+        <span class="w-28 shrink-0 text-right font-mono text-xs text-primary">{l("fp")} ($fp) →</span>
+        <div class="h-px flex-1 bg-primary"></div>
+      </div>
+      <div class="mt-1 text-sm font-bold">↓ {l("callee")}</div>
+      {frame_row(l("locals"), []str{"x", "y ●"}, "bg-card")}
+      {frame_row(l("temps"), []str{"t ●"}, "bg-card")}
+      <div class="flex items-center gap-3">
+        <span class="w-28 shrink-0 text-right font-mono text-xs text-primary">{l("sp")} ($sp) →</span>
+        <div class="h-px flex-1 bg-primary"></div>
+      </div>
+    </div>
+  )
+}
+
+struct SectionProps {
+  id: str
+  title: str
+  lead: str
+  alt: bool
+  children: []*ui.Node
+}
+
+fn Section(p: SectionProps) -> *ui.Node {
+  cls := "scroll-mt-20"
+  if p.alt { cls = "scroll-mt-20 bg-surface" }
+  return (
+    <section id={p.id} aria-labelledby={p.id + "-h"} class={cls}>
+      <core.Container cls="flex flex-col gap-8 py-16 sm:py-20">
+        <core.SectionTitle title={<span id={p.id + "-h"}>{p.title}</span>} lead={ui.text(p.lead)} />
+        {p.children}
+      </core.Container>
+    </section>
+  )
+}
+
+export fn Architecture() -> *ui.Node {
+  toc_ids := []str{"pipeline", "bootstrap", "values", "gc", "calls", "browser"}
+  toc := []*ui.Node{}
+  for i, id := range toc_ids {
+    toc = append(toc, (
+      <a href={"#" + id} class="inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary">
+        <span class="font-mono text-xs text-primary">{pad2(i + 1)}</span>
+        {a(id + "Title")}
+      </a>
+    ))
+  }
+  calls := []*ui.Node{}
+  for _, c := range i18n.tv("arch.calls").items {
+    calls = append(calls, (
+      <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
+        <h3 class="font-bold">{c.get_str("title", "")}</h3>
+        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(c.get_str("desc", ""))}</p>
+      </div>
+    ))
+  }
+  tools := []*ui.Node{}
+  for _, t := range i18n.tv("arch.tools").items {
+    tools = append(tools, (
+      <div class="flex flex-col gap-2 rounded-2xl bg-card p-5 shadow-[inset_0_0_0_1px_var(--color-border)]">
+        <h3 class="font-mono font-bold text-primary">{t.get_str("title", "")}</h3>
+        <p class="text-[15px] leading-relaxed text-muted-foreground">{i18n.rich(t.get_str("desc", ""))}</p>
+      </div>
+    ))
+  }
+  return (
+    <>
+      <core.PageHero crumb={i18n.tr("nav.architecture")} title={a("title")} lead={ui.text(a("lead"))}>
+        <nav aria-label={a("onThisPage")} class="flex flex-wrap gap-2.5">{toc}</nav>
+      </core.PageHero>
+
+      <Section id="pipeline" title={a("pipelineTitle")} lead={a("pipelineLead")} alt={false}>
+        <Pipeline />
+      </Section>
+
+      <Section id="bootstrap" title={a("bootstrapTitle")} lead={a("bootstrapLead")} alt={true}>
+        {steps(i18n.tv("arch.bootstrap").items, []int{2, 3})}
+        <div class="flex flex-wrap items-center gap-3 font-mono text-sm">
+          <span class="rounded-lg bg-code px-3 py-1.5 text-code-text">cmp build/caju2 build/caju3 &amp;&amp; echo ok</span>
+          <span class="rounded-lg bg-accent px-3 py-1.5 text-accent-foreground">stage 2 == stage 3</span>
+        </div>
+        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(a("bootstrapNote"))}</p>
+      </Section>
+
+      <Section id="values" title={a("valuesTitle")} lead={a("valuesLead")} alt={false}>
+        <Values />
+      </Section>
+
+      <Section id="gc" title={a("gcTitle")} lead={a("gcLead")} alt={true}>
+        <GcDemo />
+        <p class="max-w-[72ch] leading-[1.7] text-foreground/85">{i18n.rich(a("gcNote"))}</p>
+      </Section>
+
+      <Section id="calls" title={a("callsTitle")} lead={a("callsLead")} alt={false}>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+          {frame()}
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">{calls}</div>
+        </div>
+      </Section>
+
+      <Section id="browser" title={a("browserTitle")} lead={a("browserLead")} alt={true}>
+        {steps(i18n.tv("arch.browser").items, []int{})}
+        <div>
+          <a href={i18n.lp("/playground")} class="inline-flex h-12 items-center rounded-[14px] bg-primary px-6 font-bold text-primary-foreground hover:bg-brand-hover">{i18n.tr("nav.playground")} →</a>
+        </div>
+      </Section>
+
+      <section aria-labelledby="tools-h">
+        <core.Container cls="flex flex-col gap-6 py-16">
+          <h2 id="tools-h" class="text-[28px] font-bold tracking-[-0.03em]">{a("toolsTitle")}</h2>
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">{tools}</div>
+        </core.Container>
+      </section>
+    </>
+  )
+}

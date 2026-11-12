@@ -1,0 +1,9 @@
+# The browser: takes over the page the server rendered, with the same language, text and content.
+import ui "../caju-ui/ui"
+import "std/json"
+import "./i18n"
+import "./app"
+
+v, _ := json.parse(ui.data())
+i18n.set(v.get_str("lang", "en"), v.get_str("path", "/en"), v.get("dict"), v.get("content"))
+ui.hydrate("#app", <app.Site page={v.get_str("page", "home")} />)

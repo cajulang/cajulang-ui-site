@@ -1,0 +1,193 @@
+# A small Caju syntax highlighter (the original site's lib/highlight.ts, rule by rule): enough for
+# the snippets on the site, not a full lexer.
+import ui "../caju-ui/ui"
+import "std/strings"
+
+const KEYWORDS = " let const if else while for to and or not true false import from export fn return extern dllexport struct interface nil switch case default break continue fallthrough defer go select chan map range "
+const TYPES = " int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64 num float32 float64 str string bool any error byte rune void i32 u32 i64 u64 f32 f64 ptr wstr "
+
+export struct Token {
+  kind: str     # kw fn type str num comment plain
+  text: str
+}
+
+fn at(s: str, i: int) -> int {
+  if i < len(s) { return int(s[i]) }
+  return -1
+}
+
+fn digit(c: int) -> bool { return c >= '0' && c <= '9' }
+fn hex(c: int) -> bool { return digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') }
+
+# the length of the UTF-8 character at i, and whether it is a letter of [A-Za-z_À-ÿ]
+fn letter_at(s: str, i: int) -> (bool, int) {
+  c := at(s, i)
+  if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' { return true, 1 }
+  # À-ÿ is U+00C0..U+00FF: C3 80..C3 BF
+  if c == 0xC3 && at(s, i + 1) >= 0x80 && at(s, i + 1) <= 0xBF { return true, 2 }
+  return false, 1
+}
+
+fn ident_len(s: str, i: int) -> int {
+  ok, n := letter_at(s, i)
+  if !ok { return 0 }
+  j := i + n
+  while j < len(s) {
+    ok2, n2 := letter_at(s, j)
+    if ok2 {
+      j += n2
+    } else if digit(at(s, j)) {
+      j++
+    } else {
+      break
+    }
+  }
+  return j - i
+}
+
+# the length of the number at i, or 0
+fn number_len(s: str, i: int) -> int {
+  c := at(s, i)
+  if !digit(c) { return 0 }
+  n1 := at(s, i + 1)
+  if c == '0' && (n1 == 'x' || n1 == 'X') {
+    j := i + 2
+    while hex(at(s, j)) || at(s, j) == '_' { j++ }
+    if j > i + 2 { return j - i }
+  }
+  if c == '0' && (n1 == 'b' || n1 == 'B') {
+    j := i + 2
+    while at(s, j) == '0' || at(s, j) == '1' || at(s, j) == '_' { j++ }
+    if j > i + 2 { return j - i }
+  }
+  if c == '0' && (n1 == 'o' || n1 == 'O') {
+    j := i + 2
+    while (at(s, j) >= '0' && at(s, j) <= '7') || at(s, j) == '_' { j++ }
+    if j > i + 2 { return j - i }
+  }
+  j := i + 1
+  while digit(at(s, j)) || at(s, j) == '_' { j++ }
+  if at(s, j) == '.' && digit(at(s, j + 1)) {
+    j += 2
+    while digit(at(s, j)) { j++ }
+  }
+  if at(s, j) == 'e' || at(s, j) == 'E' {
+    k := j + 1
+    if at(s, k) == '+' || at(s, k) == '-' { k++ }
+    if digit(at(s, k)) {
+      while digit(at(s, k)) { k++ }
+      j = k
+    }
+  }
+  return j - i
+}
+
+# the tokens of one line (consecutive tokens of the same kind are merged)
+export fn line_tokens(line: str) -> []Token {
+  out := []Token{}
+  push := fn(kind: str, text: str) {
+    if len(out) > 0 && out[len(out) - 1].kind == kind {
+      out[len(out) - 1].text = out[len(out) - 1].text + text
+    } else {
+      out = append(out, Token{kind, text})
+    }
+  }
+  i := 0
+  n := len(line)
+  while i < n {
+    c := at(line, i)
+    if c == '#' || (c == '/' && at(line, i + 1) == '/') {
+      push("comment", line[i:])
+      i = n
+      continue
+    }
+    if c == '"' {
+      j := i + 1
+      while j < n && at(line, j) != '"' {
+        if at(line, j) == '\\' && j + 1 < n { j++ }
+        j++
+      }
+      if j < n { j++ }
+      push("str", line[i:j])
+      i = j
+      continue
+    }
+    if c == '`' {
+      j := i + 1
+      while j < n && at(line, j) != '`' { j++ }
+      if j < n { j++ }
+      push("str", line[i:j])
+      i = j
+      continue
+    }
+    if c == '\'' {
+      # '(?:\\.|[^'\\\n])+'
+      j := i + 1
+      while j < n && at(line, j) != '\'' {
+        if at(line, j) == '\\' && j + 1 < n { j++ }
+        j++
+      }
+      if j < n && j > i + 1 {
+        push("str", line[i:j + 1])
+        i = j + 1
+        continue
+      }
+    }
+    k := number_len(line, i)
+    if k > 0 {
+      push("num", line[i:i + k])
+      i += k
+      continue
+    }
+    k = ident_len(line, i)
+    if k > 0 {
+      w := line[i:i + k]
+      if strings.contains(KEYWORDS, " " + w + " ") {
+        push("kw", w)
+      } else if strings.contains(TYPES, " " + w + " ") {
+        push("type", w)
+      } else if at(line, i + k) == '(' {
+        push("fn", w)
+      } else {
+        push("plain", w)
+      }
+      i += k
+      continue
+    }
+    # one character (a whole UTF-8 sequence)
+    m := 1
+    if c >= 0xC0 { m = 2 }
+    if c >= 0xE0 { m = 3 }
+    if c >= 0xF0 { m = 4 }
+    if i + m > n { m = n - i }
+    push("plain", line[i:i + m])
+    i += m
+  }
+  return out
+}
+
+export fn token_class(kind: str) -> str {
+  switch kind {
+  case "kw": return "text-tok-kw"
+  case "fn": return "text-tok-fn"
+  case "type": return "text-tok-type"
+  case "str": return "text-tok-str"
+  case "num": return "text-tok-num"
+  case "comment": return "text-tok-comment italic"
+  }
+  return ""
+}
+
+# the highlighted pieces of one line (" " for an empty line, as the original renders it)
+export fn line_nodes(line: str) -> []*ui.Node {
+  if line == "" { return []*ui.Node{ui.text(" ")} }
+  out := []*ui.Node{}
+  for _, t := range line_tokens(line) {
+    if t.kind == "plain" {
+      out = append(out, ui.text(t.text))
+    } else {
+      out = append(out, ui.h("span", []ui.Attr{ui.a("class", token_class(t.kind))}, []*ui.Node{ui.text(t.text)}))
+    }
+  }
+  return out
+}

@@ -1,0 +1,28 @@
+# The site's root: the layout and the page.
+import ui "../caju-ui/ui"
+import "./core"
+import "./pages/home"
+import "./pages/examples"
+import "./pages/spec"
+import "./pages/mcp"
+import "./pages/architecture"
+import "./pages/brand"
+import "./pages/playground"
+
+export struct SiteProps {
+  page: str
+}
+
+export fn Site(p: SiteProps) -> *ui.Node {
+  body := ui.empty()
+  switch p.page {
+  case "home": body = <home.Home />
+  case "examples": body = <examples.Examples />
+  case "spec": body = <spec.Spec />
+  case "mcp": body = <mcp.Mcp />
+  case "architecture": body = <architecture.Architecture />
+  case "brand": body = <brand.Brand />
+  case "playground": body = <playground.PlaygroundPage />
+  }
+  return <core.Layout>{body}</core.Layout>
+}

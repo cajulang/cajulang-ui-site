@@ -1,0 +1,300 @@
+# The server: the web framework routes the requests, ui renders the pages (main.cajux hydrates
+# them). The same routes, redirects and <head> as the original site.
+#   development: caju-ui dev --ssr server.cajux
+#   production:  caju-ui build --ssr server.cajux && ./server     (PORT, default 3000)
+import ui "../caju-ui/ui"
+import "../caju-ui/ssr"
+import "github.com/aecdanjundex/web"
+import "std/json"
+import "std/os"
+import "std/fs"
+import "std/strings"
+import filepath "std/path"
+import "../caju-ui/gzip"
+import "./i18n"
+import "./app"
+
+let dict_text = map[str]str{}
+let dicts = map[str]*json.Value{}
+let content_text: str = ""
+let content: *json.Value = nil
+
+fn data_dir() -> str {
+  d := os.getenv("SITE_DATA")
+  if d == "" { return "data" }
+  return d
+}
+
+fn load() {
+  for _, l := range i18n.locales() {
+    text, err := fs.read_file(filepath.join(data_dir(), "dict-" + l + ".json"))
+    if err != nil { die("no dictionary for " + l + ": " + err.Error()) }
+    v, perr := json.parse(text)
+    if perr != nil { die("dict-" + l + ".json: " + perr.Error()) }
+    dict_text[l] = text
+    dicts[l] = v
+  }
+  text, err := fs.read_file(filepath.join(data_dir(), "content.json"))
+  if err != nil { die("no content.json: " + err.Error()) }
+  v, perr := json.parse(text)
+  if perr != nil { die("content.json: " + perr.Error()) }
+  content_text = text
+  content = v
+}
+
+fn die(msg: str) {
+  os.eprintln("server: " + msg)
+  os.exit(1)
+}
+
+fn esc(s: str) -> str {
+  s = strings.replace_all(s, "&", "&amp;")
+  s = strings.replace_all(s, "\"", "&quot;")
+  s = strings.replace_all(s, "<", "&lt;")
+  return strings.replace_all(s, ">", "&gt;")
+}
+
+# the <head> of a page: the same title, description, canonical, alternates and Open Graph tags
+fn head(page: str, path: str) -> str {
+  d := dicts[i18n.LANG]
+  base := i18n.site("url")
+  title := d.get_str("meta.title", "")
+  desc := d.get_str("meta.description", "")
+  key := map[str]str{"examples": "examples", "spec": "spec", "mcp": "ai", "architecture": "arch", "brand": "brand", "playground": "playground"}[page]
+  if key != "" { title = d.get_str(key + ".title", "") + " · cajulang" }
+  if page == "mcp" || page == "architecture" || page == "playground" { desc = d.get_str(key + ".lead", "") }
+  meta := d.get_str("meta.description", "")
+  b := strings.Builder{}
+  b.write("<title>" + esc(title) + "</title><meta name=\"description\" content=\"" + esc(desc) + "\"/><link rel=\"canonical\" href=\"" + base + path + "\"/>")
+  if page == "home" {
+    for _, l := range i18n.locales() { b.write("<link rel=\"alternate\" hrefLang=\"" + i18n.html_lang(l) + "\" href=\"" + base + "/" + l + "\"/>") }
+  }
+  b.write("<meta property=\"og:title\" content=\"cajulang\"/><meta property=\"og:description\" content=\"" + esc(meta) + "\"/><meta property=\"og:url\" content=\"" + base + "/" + i18n.LANG + "\"/><meta property=\"og:site_name\" content=\"cajulang\"/><meta property=\"og:locale\" content=\"" + i18n.og_locale(i18n.LANG) + "\"/><meta property=\"og:type\" content=\"website\"/>")
+  b.write("<meta name=\"twitter:card\" content=\"summary\"/><meta name=\"twitter:title\" content=\"cajulang\"/><meta name=\"twitter:description\" content=\"" + esc(meta) + "\"/>")
+  return b.string()
+}
+
+# the dictionary sections and the content each page reads (the page carries only those)
+fn dict_part(lang: str, page: str) -> str {
+  keys := []str{"meta", "nav", "ui"}
+  switch page {
+  case "home": keys = append(keys, "home", "examples")
+  case "examples": keys = append(keys, "examples")
+  case "spec": keys = append(keys, "spec")
+  case "mcp": keys = append(keys, "ai")
+  case "architecture": keys = append(keys, "arch")
+  case "brand": keys = append(keys, "brand")
+  case "playground": keys = append(keys, "playground", "examples")
+  }
+  return object(dicts[lang], keys)
+}
+
+fn content_part(page: str) -> str {
+  keys := []str{"site"}
+  switch page {
+  case "home": keys = append(keys, "examples", "bench")
+  case "examples", "spec", "playground": keys = append(keys, "examples")
+  case "mcp": keys = append(keys, "mcp")
+  case "architecture": keys = append(keys, "arch")
+  }
+  return object(content, keys)
+}
+
+fn object(v: *json.Value, keys: []str) -> str {
+  b := strings.Builder{}
+  b.write("{")
+  for i, k := range keys {
+    if i > 0 { b.write(",") }
+    b.write(json.quote(k) + ":" + v.field(k).string())
+  }
+  b.write("}")
+  return b.string()
+}
+
+fn render(lang: str, page: str, path: str) -> str {
+  i18n.set(lang, path, dicts[lang], content)
+  tpl := ssr.template()
+  tpl = strings.replace_all(tpl, "%LANG%", i18n.html_lang(lang))
+  tpl = strings.replace_all(tpl, "%HEAD%", head(page, path))
+  data := "{\"lang\":\"" + lang + "\",\"page\":\"" + page + "\",\"path\":\"" + path + "\",\"dict\":" + dict_part(lang, page) + ",\"content\":" + content_part(page) + "}"
+  return ui.page(tpl, "#app", <app.Site page={page} />, data)
+}
+
+# Next's own 404 page
+const NOT_FOUND = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><title>404: This page could not be found.</title></head><body><div style=\"font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center\"><div><style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style><h1 class=\"next-error-h1\" style=\"display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px\">404</h1><div style=\"display:inline-block\"><h2 style=\"font-size:14px;font-weight:400;line-height:49px;margin:0\">This page could not be found.</h2></div></div></div></body></html>"
+
+# a response body, compressed when the client takes gzip
+fn send(c: *web.Context, ctype: str, body: str, zipped: str) {
+  c.set_header("Vary", "Accept-Encoding")
+  if zipped != "" && gzip.accepted(c.header("accept-encoding")) {
+    c.set_header("Content-Encoding", "gzip")
+    c.data(200, ctype, zipped)
+    return
+  }
+  c.data(200, ctype, body)
+}
+
+# the pages are the same for every request (their data is the build's): each is rendered and
+# compressed once, then served from memory (what Next.js does by prerendering them)
+let pages_html = map[str]str{}
+let pages_gz = map[str]str{}
+
+fn page(name: str, sub: str) -> fn(*web.Context) {
+  return fn(c: *web.Context) {
+    lang := c.param("lang")
+    # /site.css and other files also match /:lang
+    if !i18n.has_locale(lang) {
+      other(c)
+      return
+    }
+    path := "/" + lang + sub
+    key := lang + name
+    # in development the template changes with every build: no cache
+    dev := os.getenv("UI_DEV") != ""
+    html, ok := pages_html[key]
+    if !ok || dev {
+      html = render(lang, name, path)
+      if !dev {
+        pages_html[key] = html
+        pages_gz[key] = gzip.compress(html)
+      }
+    }
+    c.set_header("Cache-Control", "no-cache")
+    # the fonts the page shows first, preloaded (the same Link header as the original)
+    c.set_header("Link", "</fonts/237858b39a32779d-s.p.2cyn07wtgehh0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </fonts/9a321a2c78eff0b5-s.p.1bkzbscqrt8rl.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\"")
+    send(c, "text/html; charset=utf-8", html, pages_gz[key])
+  }
+}
+
+# files of the build, kept in memory (with their compressed copy) after the first request
+let files_body = map[str]str{}
+let files_gz = map[str]str{}
+
+fn compressible(f: str) -> bool {
+  e := filepath.ext(f)
+  return e == ".js" || e == ".mjs" || e == ".css" || e == ".wasm" || e == ".json" || e == ".svg" || e == ".html"
+}
+
+# the language for a path without one: the cookie of the language menu, then Accept-Language
+fn pick_locale(c: *web.Context) -> str {
+  for _, part := range strings.split(c.header("cookie"), ";") {
+    kv := strings.trim_space(part)
+    if strings.has_prefix(kv, "NEXT_LOCALE=") && i18n.has_locale(kv[12:]) { return kv[12:] }
+  }
+  best := ""
+  best_q := -1.0
+  for _, part := range strings.split(c.header("accept-language"), ",") {
+    p := strings.trim_space(part)
+    if p == "" { continue }
+    tag := strings.to_lower(p)
+    let q = 1.0
+    k := strings.index(p, ";q=")
+    if k >= 0 {
+      tag = strings.to_lower(p[0:k])
+      q = parse_q(p[k + 3:])
+    }
+    base := strings.split(tag, "-")[0]
+    if i18n.has_locale(base) && q > best_q {
+      best = base
+      best_q = q
+    }
+  }
+  if best != "" { return best }
+  return "en"
+}
+
+fn parse_q(s: str) -> num {
+  let v = 0.0
+  let f = 0.0
+  for i := 0; i < len(s); i++ {
+    ch := int(s[i])
+    if ch == '.' {
+      f = 0.1
+    } else if ch >= '0' && ch <= '9' {
+      if f == 0.0 {
+        v = v * 10.0 + num(ch - '0')
+      } else {
+        v = v + f * num(ch - '0')
+        f = f / 10.0
+      }
+    }
+  }
+  return v
+}
+
+fn dist() -> str {
+  d := os.getenv("UI_DIST")
+  if d == "" { return "dist" }
+  return d
+}
+
+fn content_type(p: str) -> str {
+  switch filepath.ext(p) {
+  case ".js", ".mjs": return "text/javascript; charset=utf-8"
+  case ".css": return "text/css; charset=utf-8"
+  case ".wasm": return "application/wasm"
+  case ".json": return "application/json"
+  case ".svg": return "image/svg+xml"
+  case ".woff2": return "font/woff2"
+  case ".html": return "text/html; charset=utf-8"
+  }
+  return "application/octet-stream"
+}
+
+# a file of the build, a redirect to a language, or the 404 page
+fn other(c: *web.Context) {
+  path := c.path()
+  clean := filepath.clean("/" + path)
+  # the build's files: the runtime, the program, the CSS, the fonts, the compiler of the playground
+  if c.method() == "GET" && clean != "/" && !strings.contains(clean, "..") {
+    f := filepath.join(dist(), clean[1:])
+    body, cached := files_body[f]
+    if !cached && fs.is_file(f) {
+      body, _ = fs.read_file(f)
+      files_body[f] = body
+      if compressible(f) { files_gz[f] = gzip.compress(body) }
+      cached = true
+    }
+    if cached {
+      c.set_header("Cache-Control", "no-cache")
+      send(c, content_type(f), body, files_gz[f])
+      return
+    }
+  }
+  first := strings.split(clean, "/")[1]
+  # a page without a language (and not a file): to the same page in the reader's language
+  if !i18n.has_locale(first) && filepath.ext(clean) == "" {
+    target := "/" + pick_locale(c)
+    if clean != "/" { target = target + clean }
+    q := c.request.query
+    if q != "" { target = target + "?" + q }
+    c.redirect(307, target)
+    return
+  }
+  c.data(404, "text/html; charset=utf-8", NOT_FOUND)
+}
+
+load()
+r := web.new()
+r.use(web.recovery())
+if os.getenv("UI_DEV") == "" { r.use(web.logger()) }
+# the page runs the program in a worker with SharedArrayBuffer: every response is cross-origin isolated
+r.use(fn(c: *web.Context) {
+  ssr.isolate(c.response)
+  c.next()
+})
+r.redirect_trailing_slash = false
+r.get("/:lang", page("home", ""))
+r.get("/:lang/examples", page("examples", "/examples"))
+r.get("/:lang/spec", page("spec", "/spec"))
+r.get("/:lang/mcp", page("mcp", "/mcp"))
+r.get("/:lang/architecture", page("architecture", "/architecture"))
+r.get("/:lang/brand", page("brand", "/brand"))
+r.get("/:lang/playground", page("playground", "/playground"))
+r.no_route(other)
+
+port := os.getenv("PORT")
+if port == "" { port = "3000" }
+if os.getenv("UI_DEV") == "" { print("cajulang site: http://localhost:" + port) }
+err := r.run("127.0.0.1:" + port)
+if err != nil { die(err.Error()) }

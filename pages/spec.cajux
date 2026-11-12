@@ -1,0 +1,103 @@
+# The language specification page.
+import ui "../caju-ui/ui"
+import "std/json"
+import "std/strings"
+import "./i18n"
+import "./core"
+import "./pages/home"
+
+const KEYWORDS = "let const if else while for to and or not true false import from export fn return extern dllexport struct interface nil switch case default break continue fallthrough defer go select chan map range"
+
+fn num2(i: int) -> str {
+  if i + 1 < 10 { return "0" + str(i + 1) }
+  return str(i + 1)
+}
+
+fn block(b: *json.Value) -> *ui.Node {
+  if b.field("p") != nil {
+    return <p class="max-w-[72ch] text-base leading-[1.75] text-foreground/85">{i18n.rich(b.get_str("p", ""))}</p>
+  }
+  if b.field("note") != nil {
+    return <div class="max-w-[72ch] rounded-xl border-l-[3px] border-primary bg-accent/60 px-5 py-4 text-[15px] leading-relaxed">{i18n.rich(b.get_str("note", ""))}</div>
+  }
+  if b.field("list") != nil {
+    items := []*ui.Node{}
+    for _, x := range b.get_array("list") { items = append(items, <li>{i18n.rich(x.s)}</li>) }
+    return <ul class="flex max-w-[72ch] list-disc flex-col gap-2 pl-5 text-base leading-[1.7] marker:text-primary">{items}</ul>
+  }
+  if b.field("keywords") != nil {
+    words := []*ui.Node{}
+    for _, k := range strings.split(KEYWORDS, " ") { words = append(words, i18n.code(k)) }
+    return <div class="flex max-w-[72ch] flex-wrap gap-1.5">{words}</div>
+  }
+  if b.field("snippet") != nil {
+    s := i18n.C.get("examples.specSnippets").field(b.get_str("snippet", ""))
+    return <core.CodeWindow file={s.get_str("file", "")} code={s.get_str("code", "")} output={home.strs(s.get("output"))} flat={true} />
+  }
+  heads := []*ui.Node{}
+  for _, h := range b.get_array("table.head") {
+    heads = append(heads, <th data-slot="table-head" class="h-10 text-left align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 px-4 py-3 font-bold text-muted-foreground">{h.s}</th>)
+  }
+  rows := []*ui.Node{}
+  for _, r := range b.get_array("table.rows") {
+    cells := []*ui.Node{}
+    for _, c := range r.items {
+      cells = append(cells, <td data-slot="table-cell" class="p-2 [&:has([role=checkbox])]:pr-0 px-4 py-3 align-top text-[15px] leading-[1.8] whitespace-normal">{i18n.rich(c.s)}</td>)
+    }
+    rows = append(rows, <tr data-slot="table-row" class="border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-muted/40">{cells}</tr>)
+  }
+  return (
+    <div data-slot="card" data-size="default" class={core.card_class("gap-0 rounded-2xl p-1.5 py-1.5 ring-border")}>
+      <div data-slot="table-container" class="relative w-full overflow-x-auto">
+        <table data-slot="table" class="w-full caption-bottom text-sm">
+          <thead data-slot="table-header" class="[&_tr]:border-b">
+            <tr data-slot="table-row" class="border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted hover:bg-transparent">{heads}</tr>
+          </thead>
+          <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">{rows}</tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+export fn Spec() -> *ui.Node {
+  sections := i18n.tv("spec.sections").items
+  toc := []*ui.Node{}
+  body := []*ui.Node{}
+  for i, sec := range sections {
+    id := sec.get_str("id", "")
+    title := sec.get_str("title", "")
+    toc = append(toc, (
+      <li>
+        <a href={"#" + id} class="flex gap-3 rounded-lg px-2 py-1.5 text-[15px] text-foreground/80 transition-colors hover:bg-muted hover:text-foreground">
+          <span class="font-mono text-[13px] leading-6 text-primary">{num2(i)}</span>
+          {title}
+        </a>
+      </li>
+    ))
+    blocks := []*ui.Node{}
+    for _, b := range sec.get_array("blocks") { blocks = append(blocks, block(b)) }
+    body = append(body, (
+      <section id={id} aria-labelledby={id + "-h"} class="flex scroll-mt-24 flex-col gap-5 border-b pb-14 last:border-b-0">
+        <h2 id={id + "-h"} class="flex items-baseline gap-3 text-[28px] font-bold tracking-[-0.03em] sm:text-[32px]">
+          <span class="font-mono text-base font-bold text-primary">{num2(i)}</span>
+          {title}
+        </h2>
+        {blocks}
+      </section>
+    ))
+  }
+  lead := strings.replace_all(i18n.tr("spec.lead"), "{version}", i18n.site("version"))
+  return (
+    <>
+      <core.PageHero crumb={i18n.tr("nav.spec")} title={i18n.tr("spec.title")} lead={ui.text(lead)} />
+      <core.Container cls="grid grid-cols-1 gap-12 py-14 lg:grid-cols-[250px_minmax(0,1fr)] lg:py-20">
+        <nav aria-label={i18n.tr("spec.sectionsLabel")} class="lg:sticky lg:top-24 lg:self-start">
+          <div class="mb-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">{i18n.tr("spec.onThisPage")}</div>
+          <ol class="grid grid-cols-1 gap-0.5 sm:grid-cols-2 lg:grid-cols-1">{toc}</ol>
+        </nav>
+        <div class="flex min-w-0 flex-col gap-14">{body}</div>
+      </core.Container>
+    </>
+  )
+}

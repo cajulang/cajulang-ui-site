@@ -1,0 +1,14 @@
+.ui/
+.ref/
+dist/
+node_modules/
+/server
+/server.new
+public/site.css
+# generated from the .cajux files
+*.caju
+pages/*.caju
+!i18n.caju
+!highlight.caju
+!icons.caju
+public/caju/

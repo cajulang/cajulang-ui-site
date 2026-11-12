@@ -1,0 +1,533 @@
+# The pieces every page uses: the brand's icon and pattern, containers and titles, code windows,
+# copy buttons, the page hero, the header (language menu, theme, mobile menu), the footer.
+# The class lists are the ones the original site renders (shadcn/ui after tailwind-merge).
+import ui "../caju-ui/ui"
+import "std/strings"
+import "./i18n"
+import "./icons"
+import "./highlight"
+
+# ---------------------------------------------------------------------------------------------
+# Buttons: the classes the original site's <Button> renders for each use
+
+const BTN_A = "group/button inline-flex shrink-0 items-center justify-center"
+const BTN_Z = "whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+const SVG4 = "[&_svg:not([class*='size-'])]:size-4"
+const OUTLINE = "border-border hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:hover:bg-input/50"
+const OUTLINE_BG = "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
+const GHOST = "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50"
+const ICON_SM = "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg"
+const HAS_ICON = "has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2"
+
+export fn btn(kind: str) -> str {
+  switch kind {
+  case "lang": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE + " " + HAS_ICON + " h-11 gap-2 rounded-xl bg-transparent px-3 dark:bg-transparent"
+  case "theme": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE + " size-11 rounded-xl bg-transparent dark:bg-transparent"
+  case "install": return BTN_A + " border border-transparent bg-clip-padding " + BTN_Z + " " + SVG4 + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl bg-foreground px-5 text-[15px] font-bold text-background hover:bg-foreground/85"
+  case "menu": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " size-11 rounded-xl"
+  case "copy-page": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " hover:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-muted-foreground hover:text-foreground"
+  case "copy-code": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-code-dim hover:bg-white/10 hover:text-code-text"
+  case "copy-inverse": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 " + ICON_SM + " text-inverse-muted hover:bg-inverse-foreground/10 hover:text-inverse-foreground"
+  case "copy-swatch": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg size-7 text-current opacity-70 hover:bg-black/10 hover:text-current hover:opacity-100"
+  case "close": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " " + ICON_SM + " absolute top-3 right-3"
+  # AI demo and GC demo
+  case "outline-10": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 px-2.5 " + HAS_ICON + " h-10 rounded-xl"
+  case "primary-10": return BTN_A + " border border-transparent bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " bg-primary text-primary-foreground hover:bg-primary/80 gap-1.5 px-2.5 " + HAS_ICON + " h-10 rounded-xl font-bold"
+  case "gc-mark": return BTN_A + " border border-transparent bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " bg-primary text-primary-foreground hover:bg-primary/80 gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4 font-bold"
+  case "gc-sweep": return BTN_A + " border bg-clip-padding text-sm " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4 font-bold"
+  case "gc-drop": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4"
+  case "gc-reset": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " gap-1.5 " + HAS_ICON + " h-10 rounded-xl px-4"
+  # brand page download link
+  case "download": return BTN_A + " border border-transparent bg-clip-padding font-medium " + BTN_Z + " aria-expanded:bg-muted aria-expanded:text-foreground h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5 text-current hover:bg-black/10 hover:text-current dark:hover:bg-black/10"
+  # playground
+  case "run": return BTN_A + " border border-transparent bg-clip-padding " + BTN_Z + " " + SVG4 + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl bg-primary px-5 text-[15px] font-bold text-primary-foreground hover:bg-brand-hover"
+  case "stop": return BTN_A + " border bg-clip-padding " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-5 text-[15px] font-bold"
+  case "share": return BTN_A + " border bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + OUTLINE_BG + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-4"
+  case "reset": return BTN_A + " border border-transparent bg-clip-padding text-sm font-medium " + BTN_Z + " " + SVG4 + " " + GHOST + " gap-1.5 " + HAS_ICON + " h-11 rounded-xl px-3 text-muted-foreground"
+  }
+  return ""
+}
+
+# the big call-to-action links of the design
+export const BIG_PRIMARY = "inline-flex h-14 items-center justify-center rounded-[14px] bg-primary px-[26px] text-[17px] font-bold text-primary-foreground transition-colors hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+export const BIG_OUTLINE = "inline-flex h-14 items-center justify-center rounded-[14px] px-[26px] text-[17px] font-bold text-foreground shadow-[inset_0_0_0_2px_var(--color-foreground)] transition-colors hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+
+# a Card (shadcn) with the original's merged classes; extra goes at the end
+const CARD_HEAD = "group/card flex flex-col"
+const CARD_TAIL = "overflow-hidden bg-card text-sm text-card-foreground ring-1 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl"
+# with gap and padding given by the use (gap-* and p-* replace the card's own)
+export fn card_class(extra: str) -> str { return CARD_HEAD + " " + CARD_TAIL + " " + extra }
+# keeping the card's gap (uses that only set rounding and padding)
+export fn card_class_gap(extra: str) -> str { return CARD_HEAD + " gap-(--card-spacing) " + CARD_TAIL + " " + extra }
+
+# ---------------------------------------------------------------------------------------------
+# The brand
+
+const FRUIT = "M110 28 C88 28 80 40 77 60 C73 86 64 104 64 124 C64 142 82 152 110 152 C138 152 156 142 156 124 C156 104 147 86 143 60 C140 40 132 28 110 28 Z"
+const NUT = "M93 146 L127 146 C130 157 127 165 123 171 C133 169 140 178 137 191 C133 208 108 212 96 200 C85 188 86 166 93 146 Z"
+const NUT_LINE = "M123 172 C120 175 117 176 113 176"
+
+# the colors of a variant of the icon: background, outline, fruit, nut
+export fn variant_colors(v: str) -> []str {
+  switch v {
+  case "invertido": return []str{"#1E1712", "#FFF4E6", "#C8232F", "#8A6B4E"}
+  case "caju": return []str{"#C8232F", "#1E1712", "#FFF4E6", "#8A6B4E"}
+  case "mono": return []str{"#FFF4E6", "#1E1712", "#FFF4E6", "#FFF4E6"}
+  case "mono-escuro": return []str{"#1E1712", "#FFF4E6", "#1E1712", "#1E1712"}
+  }
+  return []str{"#FFF4E6", "#1E1712", "#C8232F", "#8A6B4E"}
+}
+
+export const VARIANTS = "principal invertido caju mono mono-escuro"
+
+# the cashew icon, as an <svg> (title "": decorative)
+export fn caju_icon(variant: str, size: int, cls: str, title: str) -> *ui.Node {
+  c := variant_colors(variant)
+  klass := "shrink-0"
+  if cls != "" { klass = klass + " " + cls }
+  let role: any = nil
+  let label: any = nil
+  let hidden: any = "true"
+  if title != "" {
+    role = "img"
+    label = title
+    hidden = nil
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 220 220" role={role} aria-label={label} aria-hidden={hidden} class={klass}>
+      <rect width="220" height="220" rx="52" fill={c[0]} />
+      <g transform="translate(112 112) scale(0.84) translate(-108 -128)">
+        <g transform="rotate(16 110 121) rotate(180 110 121)">
+          <g fill={c[1]} stroke={c[1]} stroke-width="16" stroke-linejoin="round">
+            <g transform="translate(110 147) scale(0.8) translate(-110 -146)">
+              <path d={NUT} stroke-width="20" />
+            </g>
+            <path d={FRUIT} />
+          </g>
+          <g transform="translate(110 147) scale(0.8) translate(-110 -146)">
+            <path d={NUT} fill={c[3]} />
+            <path d={NUT_LINE} fill="none" stroke={c[1]} stroke-width="6" stroke-linecap="round" />
+          </g>
+          <path d={FRUIT} fill={c[2]} stroke={c[1]} stroke-width="8" stroke-linejoin="round" />
+        </g>
+      </g>
+    </svg>
+  )
+}
+
+# the principal icon in the light theme, the inverted one in the dark theme (CSS only)
+export fn themed_icon(size: int, cls: str, title: str) -> *ui.Node {
+  a := "dark:hidden"
+  b := "hidden dark:block"
+  if cls != "" {
+    a = a + " " + cls
+    b = b + " " + cls
+  }
+  return ui.frag([]*ui.Node{caju_icon("principal", size, a, title), caju_icon("invertido", size, b, title)})
+}
+
+fn one_cashew(x: str, y: str, r: str, color: str) -> *ui.Node {
+  return (
+    <g transform={"translate(" + x + " " + y + ") rotate(" + r + ") scale(0.2) translate(-110 -121)"}>
+      <g transform="rotate(180 110 121)" fill="none" stroke={color} stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d={FRUIT} />
+        <g transform="translate(110 147) scale(0.8) translate(-110 -146)">
+          <path d={NUT} />
+        </g>
+      </g>
+    </g>
+  )
+}
+
+# thin cashew outlines tiled as a background texture
+export fn cashew_pattern(id: str, color: str, cls: str) -> *ui.Node {
+  if color == "" { color = "currentColor" }
+  let klass: any = nil
+  if cls != "" { klass = cls }
+  return (
+    <svg width="100%" height="100%" aria-hidden="true" class={klass}>
+      <defs>
+        <pattern id={id} width="104" height="104" patternUnits="userSpaceOnUse">
+          {one_cashew("26", "28.08", "16", color)}
+          {one_cashew("78", "80.08", "-16", color)}
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={"url(#" + id + ")"} />
+    </svg>
+  )
+}
+
+export fn wordmark(cls: str) -> *ui.Node {
+  return <span class={"font-bold tracking-[-0.04em] text-foreground " + cls}>caju<span class="text-primary">lang</span></span>
+}
+
+# ---------------------------------------------------------------------------------------------
+# Layout pieces
+
+export struct ContainerProps {
+  cls: str
+  children: []*ui.Node
+}
+
+export fn Container(p: ContainerProps) -> *ui.Node {
+  cls := "relative z-10 mx-auto max-w-[1200px] px-4 sm:px-6"
+  if p.cls != "" { cls = cls + " " + p.cls }
+  return <div class={cls}>{p.children}</div>
+}
+
+export struct SectionTitleProps {
+  title: *ui.Node
+  lead: *ui.Node
+  cls: str
+  h1: bool
+}
+
+export fn SectionTitle(p: SectionTitleProps) -> *ui.Node {
+  cls := "flex flex-col gap-3"
+  if p.cls != "" { cls = cls + " " + p.cls }
+  hc := "text-balance text-[34px] leading-[1.1] font-bold tracking-[-0.035em] sm:text-[44px]"
+  heading := ui.either(p.h1, <h1 class={hc}>{p.title}</h1>, <h2 class={hc}>{p.title}</h2>)
+  return (
+    <div class={cls}>
+      {heading}
+      {ui.when(p.lead != nil, <p class="max-w-[680px] text-lg leading-relaxed text-muted-foreground">{p.lead}</p>)}
+    </div>
+  )
+}
+
+export fn step_number(n: int, solid: bool) -> *ui.Node {
+  tone := "bg-accent text-accent-foreground"
+  if solid { tone = "bg-[#C8232F] text-[#FFF4E6]" }
+  return <div aria-hidden="true" class={"flex size-8 shrink-0 items-center justify-center rounded-full text-[15px] font-bold " + tone}>{n}</div>
+}
+
+# ---------------------------------------------------------------------------------------------
+# Copy buttons and code
+
+export struct CopyButtonProps {
+  text: str
+  label: str
+  cls: str          # the button's whole class list (btn("copy-code"), btn("copy-page")...)
+}
+
+export fn CopyButton(p: CopyButtonProps) -> *ui.Node {
+  done := ui.use_bool(false)
+  label := p.label
+  if done.v { label = i18n.tr("ui.copied") }
+  return (
+    <button data-slot="button" data-variant="ghost" data-size="icon-sm" class={p.cls} type="button" aria-label={label} title={label}
+      onClick={fn() {
+        ui.copy(p.text)
+        done.set(true)
+        ui.set_timeout(1600, fn() { done.set(false) })
+      }}>
+      {ui.either(done.v, icons.icon("check", ""), icons.icon("copy", ""))}
+    </button>
+  )
+}
+
+export struct CodeWindowProps {
+  file: str
+  code: str
+  output: []str
+  flat: bool        # the light shadow (code windows inside page sections)
+}
+
+export fn CodeWindow(p: CodeWindowProps) -> *ui.Node {
+  shadow := "shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]"
+  if p.flat { shadow = "shadow-[0_0_0_1px_var(--color-code-ring)]" }
+  rows := []*ui.Node{}
+  for i, line := range strings.split(p.code, "\n") {
+    rows = append(rows, (
+      <div class="flex gap-[18px]">
+        <span aria-hidden="true" class="min-w-[18px] select-none text-right text-code-gutter">{i + 1}</span>
+        <span class="whitespace-pre">{highlight.line_nodes(line)}</span>
+      </div>
+    ))
+  }
+  return (
+    <figure class={"min-w-0 overflow-hidden rounded-2xl bg-code text-code-text " + shadow}>
+      <div class="flex h-10 items-end justify-between bg-code-bar pl-3 pr-2">
+        <figcaption class="flex h-[34px] items-center gap-2 border-t-2 border-tok-kw bg-code px-4 font-mono text-[13px]">
+          {caju_icon("principal", 16, "", "")}
+          {p.file}
+        </figcaption>
+        <CopyButton text={p.code} label={i18n.tr("ui.copy") + ": " + p.file} cls={btn("copy-code") + " mb-1"} />
+      </div>
+      <pre class="overflow-x-auto px-6 py-5 font-mono text-sm leading-[1.7]"><code>{rows}</code></pre>
+      {ui.when(len(p.output) > 0, terminal_lines(p.output, "border-t border-code-line bg-code-bar"))}
+    </figure>
+  )
+}
+
+export fn terminal_lines(lines: []str, cls: str) -> *ui.Node {
+  out := []*ui.Node{}
+  for _, l := range lines {
+    if strings.has_prefix(l, "$ ") {
+      out = append(out, <div class="whitespace-pre-wrap break-all text-code-dim">{l}</div>)
+    } else {
+      text := l
+      if l == "" { text = " " }
+      out = append(out, <div class="whitespace-pre-wrap break-all">{text}</div>)
+    }
+  }
+  return <div class={"px-6 py-4 font-mono text-sm leading-relaxed " + cls}>{out}</div>
+}
+
+# a terminal session: commands in light text with an orange prompt, output dimmed
+export fn terminal(lines: []str, title: str) -> *ui.Node {
+  if title == "" { title = "terminal" }
+  out := []*ui.Node{}
+  for _, l := range lines {
+    if strings.has_prefix(l, "$ ") {
+      out = append(out, <div class="whitespace-pre-wrap break-all text-code-text"><span class="text-tok-kw">$ </span>{l[2:]}</div>)
+    } else {
+      out = append(out, <div class="whitespace-pre-wrap break-all text-[#b8a99a]">{l}</div>)
+    }
+  }
+  return (
+    <div class="min-w-0 overflow-hidden rounded-2xl bg-code shadow-[0_24px_60px_rgba(0,0,0,0.22),0_0_0_1px_var(--color-code-ring)]">
+      <div class="flex h-10 items-center bg-code-bar px-4 font-mono text-[13px] text-code-dim">{title}</div>
+      <div class="flex flex-col gap-0.5 px-6 py-5 font-mono text-sm leading-[1.75]">{out}</div>
+    </div>
+  )
+}
+
+# ---------------------------------------------------------------------------------------------
+# The top of the inner pages: breadcrumb, title, lead and an optional row under it
+
+export struct PageHeroProps {
+  crumb: str
+  title: str
+  lead: *ui.Node
+  children: []*ui.Node
+}
+
+export fn PageHero(p: PageHeroProps) -> *ui.Node {
+  return (
+    <section class="relative overflow-hidden border-b">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary opacity-[0.14] [mask-image:radial-gradient(ellipse_50%_90%_at_100%_20%,black_20%,transparent_75%)]">
+        {cashew_pattern("page-hero-pattern", "", "")}
+      </div>
+      <Container cls="flex flex-col gap-5 py-14 sm:py-20">
+        <nav aria-label={i18n.tr("ui.breadcrumb")} class="text-sm text-muted-foreground">
+          <a class="hover:text-foreground" href={i18n.lp("/")}>{i18n.tr("ui.home")}</a> / <span aria-current="page">{p.crumb}</span>
+        </nav>
+        <h1 class="text-[42px] leading-[1.08] font-bold tracking-[-0.04em] sm:text-[56px]">{p.title}</h1>
+        <p class="max-w-[680px] text-lg leading-relaxed text-muted-foreground">{p.lead}</p>
+        {ui.when(len(p.children) > 0, <div class="pt-2">{p.children}</div>)}
+      </Container>
+    </section>
+  )
+}
+
+# ---------------------------------------------------------------------------------------------
+# Header
+
+const ITEM = "group/dropdown-menu-item relative cursor-default items-center rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive flex justify-between gap-4 hover:bg-accent hover:text-accent-foreground"
+const MENU = "z-50 max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 min-w-40 absolute top-full right-0 mt-1"
+
+# the same page in another language: the first segment of the path swapped
+fn in_lang(l: str) -> str {
+  parts := strings.split(i18n.PATH, "/")
+  rest := ""
+  if len(parts) > 2 { rest = strings.join(parts[2:], "/") }
+  if rest == "" { return "/" + l }
+  return "/" + l + "/" + rest
+}
+
+fn LanguageMenu() -> *ui.Node {
+  open := ui.use_bool(false)
+  label := i18n.tr("ui.language")
+  items := []*ui.Node{}
+  for _, l := range i18n.locales() {
+    hl := i18n.html_lang(l)
+    let cur: any = nil
+    if l == i18n.LANG { cur = "true" }
+    items = append(items, (
+      <a data-slot="dropdown-menu-item" data-variant="default" class={ITEM} role="menuitem" href={in_lang(l)} hreflang={hl} lang={hl} data-set-locale={l} aria-current={cur}>
+        {i18n.locale_name(l)}
+        {ui.when(l == i18n.LANG, icons.icon("check", ""))}
+      </a>
+    ))
+  }
+  expanded := "false"
+  state := "closed"
+  if open.v {
+    expanded = "true"
+    state = "open"
+  }
+  return (
+    <div class="relative">
+      <button data-slot="dropdown-menu-trigger" data-variant="outline" data-size="default" class={btn("lang")} aria-label={label} type="button" aria-haspopup="menu" aria-expanded={expanded} data-state={state} onClick={fn() { open.toggle() }}>
+        {icons.icon("languages", "")}
+        <span class="font-mono text-sm uppercase">{i18n.LANG}</span>
+      </button>
+      {ui.when(open.v, (
+        <>
+          <div class="fixed inset-0 z-40" onClick={fn() { open.set(false) }}></div>
+          <div data-slot="dropdown-menu-content" role="menu" data-state="open" data-side="bottom" class={MENU} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { open.set(false) } }}>
+            <div data-slot="dropdown-menu-label" class="px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7">{label}</div>
+            {items}
+          </div>
+        </>
+      ))}
+    </div>
+  )
+}
+
+# light or dark: known only in the browser (the page's theme script), so the server renders
+# the moon, as the original does before it mounts
+fn ThemeToggle() -> *ui.Node {
+  dark := ui.use_bool(false)
+  ui.use_effect(fn() -> fn() {
+    ui.call("theme", "", fn(t: str) { dark.set(t == "dark") })
+    return nil
+  }, []any{})
+  label := i18n.tr("ui.useDark")
+  if dark.v { label = i18n.tr("ui.useLight") }
+  return (
+    <button data-slot="button" data-variant="outline" data-size="icon-lg" class={btn("theme")} type="button" aria-label={label} title={label}
+      onClick={fn() {
+        next := "dark"
+        if dark.v { next = "light" }
+        ui.call("setTheme", next, nil)
+        dark.set(!dark.v)
+      }}>
+      {ui.either(dark.v, icons.icon("sun", ""), icons.icon("moon", ""))}
+    </button>
+  )
+}
+
+const LINK = "rounded-md px-1 py-2.5 text-base font-medium whitespace-nowrap text-foreground/85 transition-colors hover:text-primary aria-[current=page]:text-primary"
+const SHEET = "fixed z-50 flex flex-col gap-4 bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10 w-72 bg-background p-6"
+
+struct NavItem {
+  href: str
+  label: str
+}
+
+fn nav_items() -> []NavItem {
+  return []NavItem{
+    NavItem{i18n.lp("/playground"), i18n.tr("nav.playground")},
+    NavItem{i18n.lp("/examples"), i18n.tr("nav.examples")},
+    NavItem{i18n.lp("/") + "#performance", i18n.tr("nav.performance")},
+    NavItem{i18n.lp("/spec"), i18n.tr("nav.spec")},
+    NavItem{i18n.lp("/architecture"), i18n.tr("nav.architecture")},
+    NavItem{i18n.lp("/mcp"), i18n.tr("nav.ai")},
+    NavItem{i18n.lp("/brand"), i18n.tr("nav.brand")},
+  }
+}
+
+fn current(href: str) -> any {
+  if !strings.contains(href, "#") && href == i18n.PATH { return "page" }
+  return nil
+}
+
+fn Header() -> *ui.Node {
+  sheet := ui.use_bool(false)
+  install := i18n.lp("/") + "#install"
+  desktop := []*ui.Node{}
+  mobile := []*ui.Node{}
+  for _, it := range nav_items() {
+    desktop = append(desktop, <a aria-current={current(it.href)} class={LINK} href={it.href}>{it.label}</a>)
+    mobile = append(mobile, (
+      <a aria-current={current(it.href)} class="rounded-lg px-2 py-3 text-lg font-medium hover:bg-muted aria-[current=page]:text-primary" href={it.href} onClick={fn() { sheet.set(false) }}>{it.label}</a>
+    ))
+  }
+  sheet_state := "closed"
+  sheet_expanded := "false"
+  if sheet.v {
+    sheet_state = "open"
+    sheet_expanded = "true"
+  }
+  # the sheet goes after the header, not inside it: the header's backdrop-blur would make it the
+  # containing block of the sheet's fixed position (the original renders it in a portal)
+  return (
+    <>
+    <header class="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <div class="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <a aria-label={i18n.tr("ui.homeLabel")} class="flex items-center gap-3 rounded-lg" href={i18n.lp("/")}>
+          {themed_icon(40, "", "")}
+          {wordmark("text-[26px]")}
+        </a>
+        <nav aria-label="Main" class="hidden items-center gap-5 xl:flex">
+          {desktop}
+          <LanguageMenu />
+          <ThemeToggle />
+          <a data-slot="button" data-variant="default" data-size="default" class={btn("install")} href={install}>{i18n.tr("nav.install")}</a>
+        </nav>
+        <div class="flex items-center gap-2 xl:hidden">
+          <LanguageMenu />
+          <ThemeToggle />
+          <button data-slot="sheet-trigger" data-variant="outline" data-size="icon-lg" class={btn("menu")} aria-label={i18n.tr("ui.openMenu")} type="button" aria-haspopup="dialog" aria-expanded={sheet_expanded} data-state={sheet_state} onClick={fn() { sheet.set(true) }}>
+            {icons.icon("menu", "")}
+          </button>
+        </div>
+      </div>
+    </header>
+      {ui.when(sheet.v, (
+        <>
+          <div data-slot="sheet-overlay" data-state="open" class="fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" onClick={fn() { sheet.set(false) }}></div>
+          <div data-slot="sheet-content" data-side="right" data-state="open" role="dialog" class={SHEET} onKeyDown={fn(e: *ui.Event) { if e.key == "Escape" { sheet.set(false) } }}>
+            <h2 data-slot="sheet-title" class="font-heading text-base font-medium text-foreground flex items-center gap-2">
+              {themed_icon(28, "", "")}
+              {wordmark("text-xl")}
+            </h2>
+            <nav aria-label="Main" class="mt-4 flex flex-col">
+              {mobile}
+              <a class="mt-4 rounded-xl bg-primary px-4 py-3 text-center font-bold text-primary-foreground" href={install} onClick={fn() { sheet.set(false) }}>{i18n.tr("nav.install")}</a>
+            </nav>
+            <button data-slot="sheet-close" data-variant="ghost" data-size="icon-sm" class={btn("close")} type="button" onClick={fn() { sheet.set(false) }}>
+              {icons.icon("x", "")}
+              <span class="sr-only">Close</span>
+            </button>
+          </div>
+        </>
+      ))}
+    </>
+  )
+}
+
+fn Footer() -> *ui.Node {
+  link := "rounded-md py-1 text-[15px] text-muted-foreground transition-colors hover:text-foreground"
+  return (
+    <footer class="border-t">
+      <div class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6 px-4 py-10 sm:px-6">
+        <div class="flex items-center gap-3">
+          {themed_icon(32, "", "")}
+          {wordmark("text-xl")}
+        </div>
+        <nav aria-label={i18n.tr("ui.footer")} class="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <a class={link} href={i18n.lp("/spec")}>{i18n.tr("nav.spec")}</a>
+          <a class={link} href={i18n.lp("/brand")}>{i18n.tr("nav.brand")}</a>
+          <a href={i18n.site("repo")} class={link}>{i18n.tr("ui.source")}</a>
+          <a href={i18n.site("releases")} class={link}>{i18n.tr("ui.releases")}</a>
+          <span class="text-[15px] text-muted-foreground">{i18n.tr("ui.license")}</span>
+        </nav>
+      </div>
+    </footer>
+  )
+}
+
+export struct LayoutProps {
+  children: []*ui.Node
+}
+
+# the skip link, the header, the page and the footer (inside <body class="flex min-h-dvh flex-col">)
+export fn Layout(p: LayoutProps) -> *ui.Node {
+  return (
+    <>
+      <a href="#content" class="sr-only z-50 rounded-md bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3">{i18n.tr("ui.skip")}</a>
+      <Header />
+      <main id="content" class="flex-1">{p.children}</main>
+      <Footer />
+    </>
+  )
+}
+
+# a boolean as ARIA wants it ("true" / "false")
+export fn bs(b: bool) -> str {
+  if b { return "true" }
+  return "false"
+}
