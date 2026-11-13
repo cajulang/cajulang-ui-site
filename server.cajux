@@ -314,7 +314,37 @@ fn other(c: *web.Context) {
   c.data(404, "text/html; charset=utf-8", NOT_FOUND)
 }
 
+# the pages, as /<lang><sub>
+const PAGES = "home: examples:/examples spec:/spec mcp:/mcp architecture:/architecture brand:/brand playground:/playground"
+
+# a static copy of the site (for a CDN such as Vercel's): every page in every language, as
+# <dir>/<lang><sub>.html, and 404.html; the build's files are copied by tools/export.sh
+fn export_pages(dir: str) {
+  n := 0
+  for _, l := range i18n.locales() {
+    for _, entry := range strings.split(PAGES, " ") {
+      parts := strings.split(entry, ":")
+      name := parts[0]
+      sub := parts[1]
+      path := "/" + l + sub
+      file := filepath.join(dir, path[1:] + ".html")
+      merr := fs.mkdir_all(filepath.dir(file), 493)
+      if merr != nil { die(merr.Error()) }
+      werr := fs.write_file(file, render(l, name, path), 420)
+      if werr != nil { die(werr.Error()) }
+      n++
+    }
+  }
+  werr := fs.write_file(filepath.join(dir, "404.html"), NOT_FOUND, 420)
+  if werr != nil { die(werr.Error()) }
+  print("exported " + str(n) + " pages to " + dir)
+}
+
 load()
+if os.getenv("SITE_EXPORT") != "" {
+  export_pages(os.getenv("SITE_EXPORT"))
+  os.exit(0)
+}
 r := web.new()
 r.use(web.recovery())
 if os.getenv("UI_DEV") == "" { r.use(web.logger()) }

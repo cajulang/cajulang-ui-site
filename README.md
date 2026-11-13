@@ -52,6 +52,11 @@ tools/build.sh                   # the program (wasm), the server and the CSS
 ./server                         # http://localhost:3000 (PORT)
 ```
 
+A static copy for a CDN (Vercel): `tools/export.sh` writes `out/`, with every page in every language
+rendered by the server (`SITE_EXPORT=out ./server`) and `deploy/vercel.json` (the language
+redirects by cookie and `Accept-Language`, the cross-origin isolation the playground needs, the
+cache headers). Then `cd out && vercel deploy`.
+
 Development, with hot reload: `../caju-ui/build/caju-ui dev --ssr server.cajux`, and
 `caju run site_css.caju` after changing a style (it also warns about utilities it does not know).
 

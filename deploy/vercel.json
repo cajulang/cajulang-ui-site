@@ -1,0 +1,126 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "NEXT_LOCALE",
+          "value": "(?<lang>en|pt|es|zh)"
+        }
+      ],
+      "destination": "/:lang",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept-language",
+          "value": "(?<lang>en|pt|es|zh)(?:[-;,].*)?"
+        }
+      ],
+      "destination": "/:lang",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "destination": "/en",
+      "permanent": false
+    },
+    {
+      "source": "/:page(examples|spec|mcp|architecture|brand|playground)",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "NEXT_LOCALE",
+          "value": "(?<lang>en|pt|es|zh)"
+        }
+      ],
+      "destination": "/:lang/:page",
+      "permanent": false
+    },
+    {
+      "source": "/:page(examples|spec|mcp|architecture|brand|playground)",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept-language",
+          "value": "(?<lang>en|pt|es|zh)(?:[-;,].*)?"
+        }
+      ],
+      "destination": "/:lang/:page",
+      "permanent": false
+    },
+    {
+      "source": "/:page(examples|spec|mcp|architecture|brand|playground)",
+      "destination": "/en/:page",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-origin"
+        }
+      ]
+    },
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "query",
+          "key": "v"
+        }
+      ],
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/:lang(en|pt|es|zh)",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</fonts/237858b39a32779d-s.p.2cyn07wtgehh0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </fonts/9a321a2c78eff0b5-s.p.1bkzbscqrt8rl.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\""
+        }
+      ]
+    },
+    {
+      "source": "/:lang(en|pt|es|zh)/:page(examples|spec|mcp|architecture|brand|playground)",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</fonts/237858b39a32779d-s.p.2cyn07wtgehh0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </fonts/9a321a2c78eff0b5-s.p.1bkzbscqrt8rl.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\""
+        }
+      ]
+    }
+  ]
+}
