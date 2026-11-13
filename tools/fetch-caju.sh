@@ -9,6 +9,6 @@ DIR=${CAJU_WASM_DIR:-../caju/dist/caju-wasm}
 if [ -d "$DIR" ]; then
   cp "$DIR"/caju.wasm "$DIR"/caju-files.json "$DIR"/caju-browser.mjs "$DIR"/caju-host.mjs "$DIR"/VERSION public/caju/
 else
-  curl -fsSL https://github.com/aecdanjundex/cajulang/releases/latest/download/caju-wasm.tar.gz | tar xz -C public/caju --strip-components=1
+  curl -fsSL https://github.com/cajulang/cajulang/releases/latest/download/caju-wasm.tar.gz | tar xz -C public/caju --strip-components=1
 fi
 echo "public/caju: caju $(cat public/caju/VERSION)"

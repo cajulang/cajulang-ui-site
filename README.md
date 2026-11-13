@@ -1,15 +1,15 @@
 # cajulang-ui-site
 
-The [cajulang](https://github.com/aecdanjundex/cajulang) website, rebuilt in Caju: the same pages,
+The [cajulang](https://github.com/cajulang/cajulang) website, rebuilt in Caju: the same pages,
 the same four languages and the same look as the original Next.js site, written as Caju
 components and served by a Caju server.
 
-- [ui](https://github.com/aecdanjundex/ui) renders every page on the server (natively) and the
+- [ui](https://github.com/cajulang/ui) renders every page on the server (natively) and the
   browser takes it over (WebAssembly in a worker): the language menu, the theme, the copy buttons,
   the AI demo, the compiler pipeline, the garbage collector demo and the playground run there.
-- [web](https://github.com/aecdanjundex/web) routes the requests (the language redirects, the
+- [web](https://github.com/cajulang/web) routes the requests (the language redirects, the
   pages, the build's files), with each page rendered and gzipped once and then served from memory.
-- [caju style](https://github.com/aecdanjundex/caju-style) writes the CSS: each element has one
+- [caju style](https://github.com/cajulang/caju-style) writes the CSS: each element has one
   class with a readable name (`class={hero_title}` -> `class="hero-title"`), declared with
   Tailwind's utility vocabulary in Caju (`style.def("hero-title", "text-[44px] font-bold ...")`)
   and compiled by Caju, with no Node and no Tailwind (`site_css.caju`, the theme in `theme.caju`).
@@ -40,9 +40,9 @@ public/site.js       what only the page can do (theme, storage, history, the pla
 
 ## Running it
 
-Needs `caju` (0.5.0), a checkout of [ui](https://github.com/aecdanjundex/ui) next to this one
+Needs `caju` (0.5.0), a checkout of [ui](https://github.com/cajulang/ui) next to this one
 (`../caju-ui`, with `caju build -o build/caju-ui cmd/caju-ui.caju` run in it) and one of
-[caju style](https://github.com/aecdanjundex/caju-style) (`../caju-style`). Node is only for the
+[caju style](https://github.com/cajulang/caju-style) (`../caju-style`). Node is only for the
 comparison tools (Playwright).
 
 ```sh
