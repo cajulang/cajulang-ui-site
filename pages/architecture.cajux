@@ -10,6 +10,9 @@ import "./icons"
 import "./highlight"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("architecture")
+
 # pipeline
 let LEXER_TOKENS = map[str]str{
   "KEYWORD": style.def("lexer-token-keyword", "text-[13px] text-tok-kw"),

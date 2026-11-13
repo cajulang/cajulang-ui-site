@@ -8,6 +8,9 @@ import "./icons"
 import "./highlight"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("mcp")
+
 let metric_bar_row = style.def("metric-bar-row", "grid grid-cols-[3rem_minmax(0,1fr)_4.5rem] items-center gap-2")
 let metric_mode = style.def("metric-mode", "font-mono text-xs font-bold uppercase")
 let metric_track = style.def("metric-track", "h-3 rounded-full bg-muted")

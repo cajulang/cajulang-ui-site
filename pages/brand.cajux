@@ -7,6 +7,9 @@ import "./icons"
 import "./highlight"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("brand")
+
 let swatch_style = style.def("swatch", "flex min-h-36 flex-col justify-end gap-1 rounded-2xl p-5")
 let swatch_tall = style.def("swatch-tall", "@swatch min-h-52")
 # the light colors get an edge

@@ -11,6 +11,9 @@ import "./highlight"
 import "./pages/home"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("playground")
+
 let spin = style.def("spin", "animate-spin")
 let spin_small = style.def("spin-small", "size-3.5 animate-spin")
 let editor_area = style.def("editor", "relative flex min-h-[420px] flex-1")

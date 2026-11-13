@@ -1,4 +1,6 @@
-# Writes public/site.css: the theme and every style.def of the site, compiled by caju style.
+# Writes the CSS from every style.def of the site (caju style): public/site.css with the theme,
+# the shared styles and the reset, and public/css/<page>.css with each page's own styles, which
+# the server inlines in that page's <head>.
 #   caju run site_css.caju      (tools/build.sh)
 import style "../caju-style/style"
 import css "../caju-style/css"
@@ -12,4 +14,11 @@ fonts, _ := fs.read_file("styles/fonts.css")
 style.raw(fonts)
 reg := style.registry()
 for _, w := range css.unknown(reg) { os.eprintln("caju style: unknown utility in " + w) }
-fs.write_file("public/site.css", css.minify(css.compile(reg)), 420)
+fs.mkdir_all("public/css", 493)
+for name, text := range css.compile_sheets(reg) {
+  if name == "" {
+    fs.write_file("public/site.css", css.minify(text), 420)
+  } else {
+    fs.write_file("public/css/" + name + ".css", css.minify(text), 420)
+  }
+}

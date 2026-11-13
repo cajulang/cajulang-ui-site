@@ -5,6 +5,7 @@ node_modules/
 /server
 /server.new
 public/site.css
+public/css/
 # generated from the .cajux files
 *.caju
 pages/*.caju

@@ -5,6 +5,9 @@ import "./i18n"
 import "./core"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("home")
+
 const HELLO = "fn greet(name: str) -> str {\n  return \"Hello, \" + name + \"!\"\n}\n\nprint(greet(\"world\"))"
 let badge = style.def("hero-badge", "inline-flex h-auto w-fit shrink-0 items-center justify-center gap-1 self-start overflow-hidden rounded-full border border-transparent bg-accent px-3.5 py-2 font-mono text-[13px] font-normal whitespace-nowrap text-accent-foreground transition-all")
 let hero = style.def("hero", "relative overflow-hidden")

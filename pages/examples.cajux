@@ -5,6 +5,9 @@ import "./core"
 import "./pages/home"
 import style "../caju-style/style"
 
+# this page's styles go to their own sheet, inlined in its <head> (the server)
+let SHEET = style.sheet("examples")
+
 let chip = style.def("example-chip", "inline-flex h-11 items-center gap-2 rounded-full bg-card px-4 text-[15px] font-medium shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:text-primary")
 let chip_count = style.def("example-chip-count", "rounded-full bg-accent px-2 py-0.5 font-mono text-xs text-accent-foreground")
 let chips_nav = style.def("example-chips", "flex flex-wrap gap-2.5")

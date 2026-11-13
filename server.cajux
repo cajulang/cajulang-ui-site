@@ -11,6 +11,7 @@ import "std/fs"
 import "std/strings"
 import filepath "std/path"
 import "../caju-ui/gzip"
+import "std/hash"
 import "./i18n"
 import "./app"
 
@@ -111,11 +112,29 @@ fn object(v: *json.Value, keys: []str) -> str {
   return b.string()
 }
 
+# a version of a file of the build for its URL (/site.css?v=...): the URL changes with the file,
+# so the browser can keep it for good
+fn version(file: str) -> str {
+  body, err := fs.read_file(filepath.join(dist(), file))
+  if err != nil { return "" }
+  return str(hash.crc32(body) & 0xFFFFFFFF)
+}
+
+# the page's own styles (caju style's sheet of the page: public/css/<page>.css), inlined in its
+# <head> after site.css, so they cost no request
+fn page_css(page: str) -> str {
+  text, err := fs.read_file(filepath.join(dist(), "css/" + page + ".css"))
+  if err != nil { return "" }
+  return "<style>" + text + "</style>"
+}
+
 fn render(lang: str, page: str, path: str) -> str {
   i18n.set(lang, path, dicts[lang], content)
   tpl := ssr.template()
   tpl = strings.replace_all(tpl, "%LANG%", i18n.html_lang(lang))
-  tpl = strings.replace_all(tpl, "%HEAD%", head(page, path))
+  tpl = strings.replace_all(tpl, "%HEAD%", head(page, path) + page_css(page))
+  tpl = strings.replace_all(tpl, "href=\"/site.css\"", "href=\"/site.css?v=" + version("site.css") + "\"")
+  tpl = strings.replace_all(tpl, "src=\"/site.js\"", "src=\"/site.js?v=" + version("site.js") + "\"")
   data := "{\"lang\":\"" + lang + "\",\"page\":\"" + page + "\",\"path\":\"" + path + "\",\"dict\":" + dict_part(lang, page) + ",\"content\":" + content_part(page) + "}"
   return ui.page(tpl, "#app", <app.Site page={page} />, data)
 }
@@ -124,8 +143,17 @@ fn render(lang: str, page: str, path: str) -> str {
 const NOT_FOUND = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><title>404: This page could not be found.</title></head><body><div style=\"font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center\"><div><style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style><h1 class=\"next-error-h1\" style=\"display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px\">404</h1><div style=\"display:inline-block\"><h2 style=\"font-size:14px;font-weight:400;line-height:49px;margin:0\">This page could not be found.</h2></div></div></div></body></html>"
 
 # a response body, compressed when the client takes gzip
-fn send(c: *web.Context, ctype: str, body: str, zipped: str) {
+# the ETag of a body
+fn etag(body: str) -> str { return "\"" + str(hash.crc32(body) & 0xFFFFFFFF) + "-" + str(len(body)) + "\"" }
+
+fn send(c: *web.Context, ctype: str, body: str, zipped: str, tag: str) {
   c.set_header("Vary", "Accept-Encoding")
+  # the same body again: 304, nothing to send
+  c.set_header("ETag", tag)
+  if c.header("if-none-match") == tag {
+    c.data(304, ctype, "")
+    return
+  }
   if zipped != "" && gzip.accepted(c.header("accept-encoding")) {
     c.set_header("Content-Encoding", "gzip")
     c.data(200, ctype, zipped)
@@ -138,6 +166,7 @@ fn send(c: *web.Context, ctype: str, body: str, zipped: str) {
 # compressed once, then served from memory (what Next.js does by prerendering them)
 let pages_html = map[str]str{}
 let pages_gz = map[str]str{}
+let pages_tag = map[str]str{}
 
 fn page(name: str, sub: str) -> fn(*web.Context) {
   return fn(c: *web.Context) {
@@ -157,18 +186,22 @@ fn page(name: str, sub: str) -> fn(*web.Context) {
       if !dev {
         pages_html[key] = html
         pages_gz[key] = gzip.compress(html)
+        pages_tag[key] = etag(html)
       }
     }
     c.set_header("Cache-Control", "no-cache")
     # the fonts the page shows first, preloaded (the same Link header as the original)
     c.set_header("Link", "</fonts/237858b39a32779d-s.p.2cyn07wtgehh0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </fonts/9a321a2c78eff0b5-s.p.1bkzbscqrt8rl.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\"")
-    send(c, "text/html; charset=utf-8", html, pages_gz[key])
+    tag, tagged := pages_tag[key]
+    if !tagged { tag = etag(html) }
+    send(c, "text/html; charset=utf-8", html, pages_gz[key], tag)
   }
 }
 
 # files of the build, kept in memory (with their compressed copy) after the first request
 let files_body = map[str]str{}
 let files_gz = map[str]str{}
+let files_tag = map[str]str{}
 
 fn compressible(f: str) -> bool {
   e := filepath.ext(f)
@@ -253,11 +286,18 @@ fn other(c: *web.Context) {
       body, _ = fs.read_file(f)
       files_body[f] = body
       if compressible(f) { files_gz[f] = gzip.compress(body) }
+      files_tag[f] = etag(body)
       cached = true
     }
     if cached {
-      c.set_header("Cache-Control", "no-cache")
-      send(c, content_type(f), body, files_gz[f])
+      # files whose URL changes with them (the fonts' names have their hash, ?v= is the
+      # file's version) are kept for good; the others are revalidated (ETag)
+      if strings.has_prefix(clean, "/fonts/") || c.query("v") != "" {
+        c.set_header("Cache-Control", "public, max-age=31536000, immutable")
+      } else {
+        c.set_header("Cache-Control", "no-cache")
+      }
+      send(c, content_type(f), body, files_gz[f], files_tag[f])
       return
     }
   }

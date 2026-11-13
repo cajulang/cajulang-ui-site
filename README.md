@@ -71,7 +71,17 @@ let bar_fill_caju = style.def("bar-fill-caju", "@bar-fill bg-primary")    # bar-
 The shared ones are in `core.cajux` (the `button` family, `card`, `page-width`, `section`, the
 code window...); a page composes them with `@name` (`"@card gap-3 rounded-[20px] p-7"`). States
 that come from data are data attributes (`data-[tone=ptr]:bg-accent`) rather than more classes.
-`tools/styles-diff.mjs` compares the computed style of every element with the original's.
+Each page's styles are in their own sheet (`let SHEET = style.sheet("home")`): `public/site.css`
+has the theme, the reset and the shared styles, and the server inlines the page's sheet
+(`public/css/<page>.css`) in its `<head>`. `tools/styles-diff.mjs` compares the computed style of
+every element with the original's.
+
+## Caching
+
+`site.css` and `site.js` are linked with their version (`?v=<crc>`) and kept for good
+(`immutable`), as are the fonts (their names have a hash). Everything else, including the pages and
+`app.wasm`, has an ETag, so a page after the first gets `304` for the program instead of
+downloading it again. Responses are gzipped by Caju (`../caju-ui/gzip`, dynamic Huffman codes).
 
 `ui` and caju style are imported by path (`../caju-ui/ui`, `../caju-style/style`) until they have
 published versions.
