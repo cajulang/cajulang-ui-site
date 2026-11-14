@@ -2,10 +2,10 @@
 # The build on Vercel (Git deploys): installs Caju (the release, SHA-256 checked), builds caju-ui
 # (github.com/cajulang/ui) and fetches caju-style next to the repository, puts the playground's compiler in public/caju and writes out/
 # with tools/export.sh. vercel.json (root) runs it and serves out/.
-#   CAJU_VERSION (default 0.5.0)  UI_REF, STYLE_REF (default main)
+#   CAJU_VERSION (default 0.6.0)  UI_REF, STYLE_REF (default main)
 set -eu
 cd "$(dirname "$0")/.."
-CAJU_VERSION=${CAJU_VERSION:-0.5.0}
+CAJU_VERSION=${CAJU_VERSION:-0.6.0}
 UI_REF=${UI_REF:-main}
 STYLE_REF=${STYLE_REF:-main}
 REF=$(pwd)/.ref
