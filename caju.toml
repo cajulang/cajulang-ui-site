@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "The cajulang website, rebuilt in Caju with ui (server rendering + WebAssembly) and web"
 license = "MIT"
 authors = []
+caju = "0.6.0"
 
 [dependencies]
 "github.com/cajulang/web" = "0.2.1"

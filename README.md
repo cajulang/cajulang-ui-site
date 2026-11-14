@@ -40,7 +40,7 @@ public/site.js       what only the page can do (theme, storage, history, the pla
 
 ## Running it
 
-Needs `caju` (0.5.0), a checkout of [ui](https://github.com/cajulang/ui) next to this one
+Needs `caju` (0.6.0), a checkout of [ui](https://github.com/cajulang/ui) next to this one
 (`../caju-ui`, with `caju build -o build/caju-ui cmd/caju-ui.caju` run in it) and one of
 [caju style](https://github.com/cajulang/caju-style) (`../caju-style`). Node is only for the
 comparison tools (Playwright).
