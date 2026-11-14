@@ -28,6 +28,9 @@ git clone --depth 1 --branch "$UI_REF" https://github.com/cajulang/ui.git "$REF/
 (cd "$REF/ui" && mkdir -p build && caju build -o build/caju-ui cmd/caju-ui.caju)
 export CAJU_UI="$REF/ui/build/caju-ui"
 
+# the site's packages (caju.lock)
+caju pkg install
+
 # the playground's compiler (public/caju) and the static site (out/)
 CAJU_WASM_DIR=/nonexistent tools/fetch-caju.sh
 tools/export.sh
