@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://cajulang.com/pt</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/examples</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/examples"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/examples"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/examples"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/examples"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/examples"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/examples</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/examples"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/examples"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/examples"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/examples"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/examples"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/examples</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/examples"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/examples"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/examples"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/examples"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/examples"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/examples</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/examples"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/examples"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/examples"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/examples"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/examples"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/spec</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/spec"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/spec"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/spec"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/spec"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/spec"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/spec</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/spec"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/spec"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/spec"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/spec"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/spec"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/spec</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/spec"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/spec"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/spec"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/spec"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/spec"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/spec</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/spec"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/spec"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/spec"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/spec"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/spec"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/mcp"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/mcp"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/mcp"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/mcp"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/mcp"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/mcp"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/mcp"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/mcp"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/mcp"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/mcp"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/mcp"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/mcp"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/mcp"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/mcp"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/mcp"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/mcp"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/mcp"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/mcp"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/mcp"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/mcp"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/architecture</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/architecture"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/architecture"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/architecture"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/architecture"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/architecture"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/architecture</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/architecture"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/architecture"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/architecture"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/architecture"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/architecture"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/architecture</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/architecture"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/architecture"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/architecture"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/architecture"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/architecture"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/architecture</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/architecture"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/architecture"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/architecture"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/architecture"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/architecture"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/brand</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/brand"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/brand"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/brand"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/brand"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/brand"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/brand</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/brand"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/brand"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/brand"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/brand"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/brand"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/brand</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/brand"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/brand"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/brand"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/brand"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/brand"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/brand</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/brand"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/brand"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/brand"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/brand"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/brand"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/pt/playground</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/playground"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/playground"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/playground"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/playground"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/playground"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/en/playground</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/playground"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/playground"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/playground"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/playground"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/playground"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/es/playground</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/playground"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/playground"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/playground"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/playground"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/playground"/>
+  </url>
+  <url>
+    <loc>https://cajulang.com/zh/playground</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://cajulang.com/pt/playground"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cajulang.com/en/playground"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cajulang.com/es/playground"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://cajulang.com/zh/playground"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cajulang.com/en/playground"/>
+  </url>
+</urlset>
