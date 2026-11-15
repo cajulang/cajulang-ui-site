@@ -336,7 +336,7 @@ fn other(c: *web.Context) {
 # the security headers of every response, the same as vercel.json and deploy/vercel.json. The
 # hashes are those of the two inline scripts of the pages (the theme's and ui's window.__UI__):
 # tools/export.sh fails if a page has an inline script whose hash is not here
-const CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-n46vPwSWuMC0W703pBofImv82Z26xo4LXymv0E9caPk=' 'sha256-G4g/Jvx4daCXr8M7KjAgWyzDHHrmsIJcntHMEoInL4U='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+const CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://*.googletagmanager.com 'sha256-n46vPwSWuMC0W703pBofImv82Z26xo4LXymv0E9caPk=' 'sha256-G4g/Jvx4daCXr8M7KjAgWyzDHHrmsIJcntHMEoInL4U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 const PERMISSIONS = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=()"
 
 # the pages, as /<lang><sub>
