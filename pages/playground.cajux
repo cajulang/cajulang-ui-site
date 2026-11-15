@@ -110,7 +110,8 @@ fn from_hash(h: str) -> []PFile {
   return nil
 }
 
-# [[name, code], ...] (pairs) or [{"name", "code"}, ...] (the saved files)
+# [[name, code], ...] (pairs) or [{"name", "code"}, ...] (the saved files); a link or a saved
+# list with a file name the editor would refuse (valid_name) or a name twice is ignored as a whole
 fn parse_files(text: str, pairs: bool) -> []PFile {
   v, err := json.parse(text)
   if err != nil || v.kind != "array" { return nil }
@@ -123,6 +124,10 @@ fn parse_files(text: str, pairs: bool) -> []PFile {
       f = PFile{x.items[0].s, x.items[1].s}
     } else {
       f = PFile{x.get_str("name", ""), x.get_str("code", "")}
+    }
+    if !valid_name(f.name) { return nil }
+    for _, o := range out {
+      if o.name == f.name { return nil }
     }
     if f.name == MAIN { has_main = true }
     out = append(out, f)
