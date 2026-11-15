@@ -374,8 +374,17 @@ r := web.new()
 r.use(web.recovery())
 if os.getenv("UI_DEV") == "" { r.use(web.logger()) }
 # the page runs the program in a worker with SharedArrayBuffer: every response is cross-origin isolated
+# and carries the security headers (the same as vercel.json; not in development, whose reload
+# script is not in the CSP)
 r.use(fn(c: *web.Context) {
   ssr.isolate(c.response)
+  if os.getenv("UI_DEV") == "" {
+    c.set_header("Content-Security-Policy", CSP)
+    c.set_header("X-Content-Type-Options", "nosniff")
+    c.set_header("X-Frame-Options", "DENY")
+    c.set_header("Referrer-Policy", "strict-origin-when-cross-origin")
+    c.set_header("Permissions-Policy", PERMISSIONS)
+  }
   c.next()
 })
 r.redirect_trailing_slash = false
